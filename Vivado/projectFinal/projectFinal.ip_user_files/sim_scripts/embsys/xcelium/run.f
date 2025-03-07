@@ -149,7 +149,6 @@
 -endlib
 -makelib xcelium_lib/xil_defaultlib \
   "../../../bd/embsys/ip/embsys_xadc_wiz_0_0/embsys_xadc_wiz_0_0.v" \
-  "../../../bd/embsys/sim/embsys.v" \
 -endlib
 -makelib xcelium_lib/lib_srl_fifo_v1_0_2 \
   "../../../../projectFinal.gen/sources_1/bd/embsys/ipshared/51ce/hdl/lib_srl_fifo_v1_0_rfs.vhd" \
@@ -159,6 +158,9 @@
 -endlib
 -makelib xcelium_lib/xil_defaultlib \
   "../../../bd/embsys/ip/embsys_axi_uartlite_0_0/sim/embsys_axi_uartlite_0_0.vhd" \
+-endlib
+-makelib xcelium_lib/xil_defaultlib \
+  "../../../bd/embsys/sim/embsys.v" \
 -endlib
 -makelib xcelium_lib/xil_defaultlib \
   glbl.v

@@ -204,7 +204,6 @@ vcom -work xil_defaultlib -93  \
 
 vlog -work xil_defaultlib  -v2k5 "+incdir+../../../../projectFinal.gen/sources_1/bd/embsys/ipshared/ec67/hdl" "+incdir+../../../../projectFinal.gen/sources_1/bd/embsys/ipshared/7698" "+incdir+../../../../projectFinal.gen/sources_1/bd/embsys/ip/embsys_nexys4io_0_0/drivers/nexys4io_v1_0/src" \
 "../../../bd/embsys/ip/embsys_xadc_wiz_0_0/embsys_xadc_wiz_0_0.v" \
-"../../../bd/embsys/sim/embsys.v" \
 
 vcom -work lib_srl_fifo_v1_0_2 -93  \
 "../../../../projectFinal.gen/sources_1/bd/embsys/ipshared/51ce/hdl/lib_srl_fifo_v1_0_rfs.vhd" \
@@ -214,6 +213,9 @@ vcom -work axi_uartlite_v2_0_31 -93  \
 
 vcom -work xil_defaultlib -93  \
 "../../../bd/embsys/ip/embsys_axi_uartlite_0_0/sim/embsys_axi_uartlite_0_0.vhd" \
+
+vlog -work xil_defaultlib  -v2k5 "+incdir+../../../../projectFinal.gen/sources_1/bd/embsys/ipshared/ec67/hdl" "+incdir+../../../../projectFinal.gen/sources_1/bd/embsys/ipshared/7698" "+incdir+../../../../projectFinal.gen/sources_1/bd/embsys/ip/embsys_nexys4io_0_0/drivers/nexys4io_v1_0/src" \
+"../../../bd/embsys/sim/embsys.v" \
 
 vlog -work xil_defaultlib \
 "glbl.v"
