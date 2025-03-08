@@ -1,6 +1,15 @@
-/* Sample FreeRTOS application
+/*
+Authors: Kim Steiner and Cameron Castillo
+Date: 3/7/2025
+Purpose: This application is the Artix Garden Watering system. This system uses FreeRTOS
+to implement the watering system. A UART is used for communication between a GUI running
+on a PC and this application. A protocol is used to communicate what the current water
+level is in terms of dry-needs water, no water needed, or over-watered.
 
-The application Demonstrates usage of Queues, Semaphores, Tasking model.
+The Artix Garden will contain two plants.
+
+The application Demonstrates usage of Queues, Semaphores, Tasking model.  The application
+will toggle an LED to represent the watering of a plant.
 
 Application - Toggle LEDs on each button interrupt. Could modify to include switches
 
@@ -32,6 +41,7 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 /* BSP includes. */
 #include "xtmrctr.h"
 #include "xgpio.h"
+#include "xsysmon.h"
 #include "sleep.h"
 
 /*Definitions for NEXYS4IO Peripheral*/
@@ -42,15 +52,19 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 #define BTN_CHANNEL		1
 #define SW_CHANNEL		2
 
-#define mainQUEUE_LENGTH					( 1 )
+#define mainQUEUE_LENGTH					( 10 )
 
 /* A block time of 0 simply means, "don't block". */
 #define mainDONT_BLOCK						( portTickType ) 0
+
+// maximum uart buffer size
+#define BUFFER_SIZE		(128)
 
 //Create Instances
 static XGpio xInputGPIOInstance;
 XUartLite UartLite;
 XUartLite_Config *Config;
+XSysMon SysMonInst;  // Create an instance of the SysMon driver
 
 //Function Declarations
 static void prvSetupHardware( void );
@@ -69,41 +83,67 @@ void vUART_ISR(void) {
     xSemaphoreGiveFromISR(binary_sem,NULL);
 }
 
+// Simple parse function.
+static void ParseData(uint8_t *buffer, int length) {
+    // Implement your parsing logic based on your protocol
+	uint16_t sensor_value = 0;
+    for (int i = 0; i < length; i++) {
+        if (buffer[i] == 's') {
 
+        } else if (buffer[i] == 'd') {
+            i++;
+            if (i < length && buffer[i] == '1') {
+            	sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
+            	xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
+            } else if (i < length && buffer[i] == '2'){
+            	sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+10);  // Channel 10 corresponds to A13/ADP3
+            	xil_printf("Raw Data (Channel 10): %d\r\n", sensor_value);
+            } else {
+            	xil_printf("invalid protocol %s\r\n", buffer);
+            }
+        } else {
 
-void UartLiteHandler(void *CallBackRef, unsigned int ByteCount) {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    uint8_t data = XUartLite_RecvByte(XPAR_UARTLITE_0_BASEADDR);
-    xQueueSendFromISR(xQueue, &data, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-    xSemaphoreGiveFromISR(binary_sem,NULL);
-
+        }
+    }
 }
+
 
 //A task which takes the Interrupt Semaphore and sends a queue to task 2.
-void sem_taken_que_tx (void *p)
+void vParseInputTask( void *pvParams)
 {
+	uint8_t data;
+	uint8_t buffer[BUFFER_SIZE];
+	uint16_t index = 0;
 
-	uint16_t ValueToSend = 0x00FF;
+	while(1) {
+		if(xSemaphoreTake(binary_sem,500)){
+			vTaskDelay(100);	// block for 1 second
+			data = XUartLite_RecvByte(XPAR_UARTLITE_0_BASEADDR);
+			if (data == '\r' || index >= BUFFER_SIZE) {
+				// parse the data
+				ParseData(buffer, index);
+				index = 0;
+			} else {
+				// put the data in the buffer
+				buffer[index] = data;
+				++index;
+			}
 
-	while(1)
-	if(xSemaphoreTake(binary_sem,500)){
-		xil_printf("Queue Sent: %d\r\n",ValueToSend);
-		xQueueSend( xQueue, &ValueToSend, mainDONT_BLOCK );
-		ValueToSend = ~ValueToSend;//Toggle for next time.
+			xQueueSend( xQueue, &data, mainDONT_BLOCK );
+		}
+		else
+			xil_printf("Semaphore time out\r\n");
+
 	}
-	else
-		xil_printf("Semaphore time out\r\n");
 }
 
+// receiver task to handle uart
 void que_rx (void *p)
 {
-
-	uint16_t ReceivedValue;
+	uint16_t data;
 	while(1){
-		xQueueReceive( xQueue, &ReceivedValue, portMAX_DELAY );
-		uint8_t data = XUartLite_RecvByte(XPAR_UARTLITE_0_BASEADDR);
+		xQueueReceive( xQueue, &data, portMAX_DELAY );
+		//uint8_t data = XUartLite_RecvByte(XPAR_UARTLITE_0_BASEADDR);
 		//Write to LED.
 		//NX4IO_setLEDs(ReceivedValue);
 		xil_printf("Queue Received: %c\r\n",data);
@@ -134,7 +174,7 @@ int main(void)
 	configASSERT( xQueue );
 
 	//Create Task1
-	xTaskCreate( sem_taken_que_tx,
+	xTaskCreate( vParseInputTask,
 				 ( const char * ) "TX",
 				 configMINIMAL_STACK_SIZE,
 				 NULL,
@@ -148,6 +188,11 @@ int main(void)
 				NULL,
 				2,
 				NULL );
+
+	XSysMon_Reset(&SysMonInst);
+
+	uint16_t sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
+	xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
 
 
 
@@ -174,14 +219,16 @@ static void prvSetupHardware( void )
 		xil_printf("Uart interrupt handler installed\r\n");
 		vPortEnableInterrupt(XPAR_MICROBLAZE_0_AXI_INTC_AXI_UARTLITE_0_INTERRUPT_INTR);
 
-		/* Set switches and buttons to input. */
-	//	XGpio_SetDataDirection( &xInputGPIOInstance, BTN_CHANNEL, ucSetToInput );
-	//	XGpio_SetDataDirection( &xInputGPIOInstance, SW_CHANNEL, ucSetToInput );
+		xStatus = XSysMon_CfgInitialize(&SysMonInst, XSysMon_LookupConfig(XPAR_XADC_WIZ_0_DEVICE_ID), XPAR_XADC_WIZ_0_BASEADDR);
+		if (xStatus != XST_SUCCESS) {
+			xil_printf("SysMon initialization failed.\n");
+			return XST_FAILURE;
+		}
 
+		// configure the uart
 		Config = XUartLite_LookupConfig(XPAR_UARTLITE_0_DEVICE_ID);
 		xStatus = XUartLite_CfgInitialize(&UartLite, Config, XPAR_UARTLITE_0_BASEADDR);
 
-		//XUartLite_SetRecvHandler(&UartLite, UartLiteHandler, &UartLite);
 		XUartLite_EnableInterrupt(&UartLite);
 	}
 
