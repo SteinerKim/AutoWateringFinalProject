@@ -22,7 +22,7 @@ o Nexys4IO is connected to LEDs. (Could also use another GPIO instance
  o GPIO_1 is capable of generating an interrupt and is connect to the switches and buttons
 (see project #2 write-up for details)
 o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
- the FreeRTOS systick.
+ the FreeRTOS sys tick.
 */
 
 /* Kernel includes. */
@@ -62,7 +62,6 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 #define BUFFER_SIZE		(128)
 
 //Create Instances
-//static XGpio xInputGPIOInstance;
 XUartLite UartLite;
 XUartLite_Config *Config;
 XSysMon SysMonInst;  // Create an instance of the SysMon driver
@@ -91,6 +90,7 @@ static void vUART_ISR(void* pvParams) {
 
 int main(void)
 {
+	BaseType_t xReturn;
 	// Announcement
 	xil_printf("Hello from FreeRTOS Example\r\n");
 
@@ -109,16 +109,16 @@ int main(void)
 	/* Sanity check that the queue was created. */
 	configASSERT( xQueue );
 
-	//Create Task1
-	xTaskCreate( vParseInputTask,
+	//Create Parse input task
+	xReturn = xTaskCreate( vParseInputTask,
 				 ( const char * ) "TX",
 				 configMINIMAL_STACK_SIZE,
 				 NULL,
 				 2,
 				 NULL );
 
-	//Create Task2
-	xTaskCreate( que_rx,
+	//Create receive UART data task
+	xReturn = xTaskCreate( que_rx,
 				"RX",
 				configMINIMAL_STACK_SIZE,
 				NULL,
@@ -126,7 +126,7 @@ int main(void)
 				NULL );
 
 	// Create UART TX task
-	xTaskCreate( que_tx,
+	xReturn = xTaskCreate( que_tx,
 					"RX",
 					configMINIMAL_STACK_SIZE,
 					NULL,
@@ -151,7 +151,6 @@ int main(void)
 static uint32_t prvSetupHardware( void )
 {
 	uint32_t xStatus = XST_SUCCESS;
-//	const unsigned char ucSetToInput = 0xFFU;
 
 	xil_printf("Initializing Hardware\r\n");
 
@@ -181,6 +180,7 @@ static uint32_t prvSetupHardware( void )
 		return XST_FAILURE;
 	}
 
+	NX4IO_setLEDs(0); // initialize LEDS to off
 
 	configASSERT( ( xStatus == XST_SUCCESS ) );
 	return XST_SUCCESS;
@@ -193,32 +193,53 @@ static uint32_t prvSetupHardware( void )
 // w<sensor> = water sensor plant
 // s<sensor> = stop watering sensor plant
 static void ParseData(uint8_t *buffer, int length) {
-    // Implement your parsing logic based on your protocol
+	// Implement your parsing logic based on your protocol
 	uint16_t sensor_value = 0;
-    for (int i = 0; i < length; i++) {
-        if (buffer[i] == 's') {
-
-        } else if (buffer[i] == 'n') {
-            i++;
-            if (i < length && buffer[i] == '1') {
-            	sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
-            	xQueueSend( xTxQueue, &sensor_value, mainDONT_BLOCK );
-            	xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
-            } else if (i < length && buffer[i] == '2'){
-            	sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+10);  // Channel 10 corresponds to A13/ADP3
-            	xQueueSend( xTxQueue, &sensor_value, mainDONT_BLOCK );
-            	xil_printf("Raw Data (Channel 10): %d\r\n", sensor_value);
-            } else {
-            	buffer[i+1] = '\0';
-            	xil_printf("invalid protocol %s\r\n", buffer);
-            }
-        } else {
-
-        }
-    }
+	for (int i = 0; i < length; i++) {
+		if ((buffer[i] == 's') || (buffer[i] == 'S')) {		// handle stop watering
+			i++;
+			if (i < length && buffer[i] == '1') {			// stop watering plant 1
+				NX4IO_setLEDs(NX4IO_getLEDS_DATA() ^ 0x1);
+			} else if (i < length && buffer[i] == '2'){ 	// stop watering plant 2
+				NX4IO_setLEDs(NX4IO_getLEDS_DATA() ^ 0x2);
+			} else {
+				buffer[i+1] = '\0';
+				xil_printf("invalid protocol %s\r\n", buffer);
+			}
+		} else if ((buffer[i] == 'w') || (buffer[i] == 'W')) {	// handle watering
+			i++;
+			if (i < length && buffer[i] == '1') {				// start watering plant 1
+				NX4IO_setLEDs(NX4IO_getLEDS_DATA() | 0x1);
+			} else if (i < length && buffer[i] == '2'){			// start watering plant 2
+				NX4IO_setLEDs(NX4IO_getLEDS_DATA() | 0x2);
+			} else {
+				buffer[i+1] = '\0';
+				xil_printf("invalid protocol %s\r\n", buffer);
+			}
+		} else if ((buffer[i] == 'n') || (buffer[i] == 'N')) {	// handle sensor reading
+			i++;
+			if (i < length && buffer[i] == '1') {				// read sensor 1 reading
+				sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
+				xQueueSend( xTxQueue, &sensor_value, mainDONT_BLOCK );
+				xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
+			} else if (i < length && buffer[i] == '2') {		// read sensor 2 reading
+				sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+10);  // Channel 10 corresponds to A13/ADP3
+				xQueueSend( xTxQueue, &sensor_value, mainDONT_BLOCK );
+				xil_printf("Raw Data (Channel 10): %d\r\n", sensor_value);
+			} else {
+				buffer[i+1] = '\0';
+				xil_printf("invalid protocol %s\r\n", buffer);
+			}
+		} else {
+			buffer[i+1] = '\0';
+			xil_printf("invalid protocol %s\r\n", buffer);
+		}
+	}
 }
 
-//A task which takes the Interrupt Semaphore and sends a queue to task 2.
+// Parse input task receives a semaphore from the UART ISR, one byte at a time.
+// Data is parsed when the buffer is full or a return character is received.
+// Data is sent to a print task, via a message queue.
 void vParseInputTask( void *pvParams)
 {
 	uint8_t data;
@@ -228,7 +249,7 @@ void vParseInputTask( void *pvParams)
 	while(1) {
 		if(xSemaphoreTake(binary_sem,500)){
 			vTaskDelay(100);	// block for 1 second
-			data = XUartLite_RecvByte(XPAR_UARTLITE_0_BASEADDR); //(&UartLite, &data, 1); //XPAR_UARTLITE_0_BASEADDR);
+			data = XUartLite_RecvByte(XPAR_UARTLITE_0_BASEADDR); 	// receive a byte of data
 			if (data == '\r' || index >= BUFFER_SIZE) {
 				// parse the data
 				ParseData(buffer, index);
@@ -245,9 +266,11 @@ void vParseInputTask( void *pvParams)
 			xil_printf("Semaphore time out\r\n");
 
 	}
+	vTaskDelete(NULL);
 }
 
-// receiver task to handle uart.  Prints each character read.  Mainly for visual.
+// receiver task to handle uart received data printing.
+// Prints each character read.  Mainly for visual.
 void que_rx (void *p)
 {
 	uint16_t data;
@@ -255,6 +278,7 @@ void que_rx (void *p)
 		xQueueReceive( xQueue, &data, portMAX_DELAY );
 		xil_printf("Queue Received: %c\r\n",data);
 	}
+	vTaskDelete(NULL);
 }
 
 // Uart send task to respond to n<sensor> requests.
@@ -265,25 +289,27 @@ void que_tx (void *p)
 	const char ACK = 'A';
 	while(1){
 		xQueueReceive( xTxQueue, &data, portMAX_DELAY );
+		// copilot mentioned the disable/enable interrupt
 		XUartLite_DisableInterrupt(&UartLite);
-		SendData(&ACK);
+		SendData(&ACK);	// send acknowledgement then the data
 		send_uint16_as_bytes(&UartLite, data);
 		XUartLite_EnableInterrupt(&UartLite);
 	}
+	vTaskDelete(NULL);
 }
 
 // Transmits a buffer of data to the UART.
 void SendData(const char *data) {
-    XUartLite_Send(&UartLite, (u8 *)data, strlen(data));
+	XUartLite_Send(&UartLite, (u8 *)data, strlen(data));
 }
 
 // Transmits a 16 bit of data to the UART.
 void send_uint16_as_bytes(XUartLite *uart_instance, uint16_t data)
 {
-    uint8_t bytes[2];
-    bytes[0] = (data >> 8) & 0xFF; // High byte
-    bytes[1] = data & 0xFF;        // Low byte
+	uint8_t bytes[2];
+	bytes[0] = (data >> 8) & 0xFF; // High byte
+	bytes[1] = data & 0xFF;        // Low byte
 
-    XUartLite_Send(uart_instance, bytes, 2);
+	XUartLite_Send(uart_instance, bytes, 2);
 }
 
