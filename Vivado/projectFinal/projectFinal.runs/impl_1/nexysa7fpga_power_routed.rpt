@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date             : Fri Mar  7 07:52:19 2025
+| Date             : Fri Mar 14 17:26:14 2025
 | Host             : PDXKSTEINER running 64-bit major release  (build 9200)
 | Command          : report_power -file nexysa7fpga_power_routed.rpt -pb nexysa7fpga_power_summary_routed.pb -rpx nexysa7fpga_power_routed.rpx
 | Design           : nexysa7fpga
@@ -30,10 +30,10 @@ Table of Contents
 ----------
 
 +--------------------------+--------------+
-| Total On-Chip Power (W)  | 0.242        |
+| Total On-Chip Power (W)  | 0.240        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 0.144        |
+| Dynamic (W)              | 0.141        |
 | Device Static (W)        | 0.098        |
 | Effective TJA (C/W)      | 4.6          |
 | Max Ambient (C)          | 83.9         |
@@ -53,22 +53,22 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.017 |       12 |       --- |             --- |
-| Slice Logic              |     0.006 |     8794 |       --- |             --- |
-|   LUT as Logic           |     0.004 |     2937 |     63400 |            4.63 |
+| Slice Logic              |     0.006 |     8848 |       --- |             --- |
+|   LUT as Logic           |     0.004 |     2958 |     63400 |            4.67 |
 |   LUT as Distributed RAM |    <0.001 |       96 |     19000 |            0.51 |
 |   CARRY4                 |    <0.001 |      199 |     15850 |            1.26 |
-|   Register               |    <0.001 |     3830 |    126800 |            3.02 |
+|   Register               |    <0.001 |     3839 |    126800 |            3.03 |
 |   F7/F8 Muxes            |    <0.001 |      213 |     63400 |            0.34 |
 |   LUT as Shift Register  |    <0.001 |      100 |     19000 |            0.53 |
 |   BUFG                   |    <0.001 |        1 |        32 |            3.13 |
-|   Others                 |    <0.001 |      628 |       --- |             --- |
-| Signals                  |     0.008 |     6239 |       --- |             --- |
+|   Others                 |    <0.001 |      631 |       --- |             --- |
+| Signals                  |     0.008 |     6254 |       --- |             --- |
 | Block RAM                |     0.003 |       16 |       135 |           11.85 |
 | MMCM                     |     0.106 |        1 |         6 |           16.67 |
-| I/O                      |     0.002 |       71 |       210 |           33.81 |
+| I/O                      |    <0.001 |       72 |       210 |           34.29 |
 | XADC                     |     0.002 |        1 |       --- |             --- |
 | Static Power             |     0.098 |          |           |                 |
-| Total                    |     0.242 |          |           |                 |
+| Total                    |     0.240 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -78,9 +78,9 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint    |       1.000 |     0.051 |       0.035 |      0.016 |       NA    | Unspecified | NA         |
+| Vccint    |       1.000 |     0.050 |       0.034 |      0.016 |       NA    | Unspecified | NA         |
 | Vccaux    |       1.800 |     0.077 |       0.059 |      0.018 |       NA    | Unspecified | NA         |
-| Vcco33    |       3.300 |     0.005 |       0.001 |      0.004 |       NA    | Unspecified | NA         |
+| Vcco33    |       3.300 |     0.004 |       0.000 |      0.004 |       NA    | Unspecified | NA         |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco18    |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco15    |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
@@ -156,16 +156,12 @@ Table of Contents
 +-------------------------------+-----------+
 | Name                          | Power (W) |
 +-------------------------------+-----------+
-| nexysa7fpga                   |     0.144 |
-|   embsys_i                    |     0.142 |
+| nexysa7fpga                   |     0.141 |
+|   embsys_i                    |     0.141 |
 |     PWM_Analyzer_0            |     0.001 |
 |       inst                    |     0.001 |
-|     PWM_Analyzer_1            |     0.001 |
-|       inst                    |     0.001 |
-|     PWM_Analyzer_2            |     0.001 |
-|       inst                    |     0.001 |
-|     axi_timer_0               |     0.004 |
-|       U0                      |     0.004 |
+|     axi_timer_0               |     0.003 |
+|       U0                      |     0.003 |
 |     clk_wiz_1                 |     0.106 |
 |       inst                    |     0.106 |
 |     mdm_1                     |     0.001 |

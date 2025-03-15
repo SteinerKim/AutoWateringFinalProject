@@ -1,7 +1,7 @@
 //Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-//Date        : Fri Mar  7 07:40:39 2025
+//Date        : Mon Mar 10 10:44:11 2025
 //Host        : PDXKSTEINER running 64-bit major release  (build 9200)
 //Command     : generate_target embsys_wrapper.bd
 //Design      : embsys_wrapper
@@ -10,7 +10,8 @@
 `timescale 1 ps / 1 ps
 
 module embsys_wrapper
-   (RGB2_Blue_0,
+   (GPIO2_0_tri_io,
+    RGB2_Blue_0,
     RGB2_Green_0,
     RGB2_Red_0,
     UART_0_rxd,
@@ -42,6 +43,7 @@ module embsys_wrapper
     rgbRED_0,
     seg_0,
     sw_0);
+  inout [0:0]GPIO2_0_tri_io;
   output RGB2_Blue_0;
   output RGB2_Green_0;
   output RGB2_Red_0;
@@ -75,6 +77,10 @@ module embsys_wrapper
   output [6:0]seg_0;
   input [15:0]sw_0;
 
+  wire [0:0]GPIO2_0_tri_i_0;
+  wire [0:0]GPIO2_0_tri_io_0;
+  wire [0:0]GPIO2_0_tri_o_0;
+  wire [0:0]GPIO2_0_tri_t_0;
   wire RGB2_Blue_0;
   wire RGB2_Green_0;
   wire RGB2_Red_0;
@@ -108,8 +114,16 @@ module embsys_wrapper
   wire [6:0]seg_0;
   wire [15:0]sw_0;
 
+  IOBUF GPIO2_0_tri_iobuf_0
+       (.I(GPIO2_0_tri_o_0),
+        .IO(GPIO2_0_tri_io[0]),
+        .O(GPIO2_0_tri_i_0),
+        .T(GPIO2_0_tri_t_0));
   embsys embsys_i
-       (.RGB2_Blue_0(RGB2_Blue_0),
+       (.GPIO2_0_tri_i(GPIO2_0_tri_i_0),
+        .GPIO2_0_tri_o(GPIO2_0_tri_o_0),
+        .GPIO2_0_tri_t(GPIO2_0_tri_t_0),
+        .RGB2_Blue_0(RGB2_Blue_0),
         .RGB2_Green_0(RGB2_Green_0),
         .RGB2_Red_0(RGB2_Red_0),
         .UART_0_rxd(UART_0_rxd),

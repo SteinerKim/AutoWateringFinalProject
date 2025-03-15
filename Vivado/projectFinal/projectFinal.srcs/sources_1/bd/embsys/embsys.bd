@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0xEADC82166F474357",
+      "boundary_crc": "0xE231A76E781ED73A",
       "device": "xc7a100tcsg324-1",
       "gen_directory": "../../../../projectFinal.gen/sources_1/bd/embsys",
       "name": "embsys",
@@ -137,6 +137,31 @@
           "TxD": {
             "physical_name": "UART_0_txd",
             "direction": "O"
+          }
+        }
+      },
+      "GPIO2_0": {
+        "mode": "Master",
+        "vlnv_bus_definition": "xilinx.com:interface:gpio:1.0",
+        "vlnv": "xilinx.com:interface:gpio_rtl:1.0",
+        "port_maps": {
+          "TRI_I": {
+            "physical_name": "GPIO2_0_tri_i",
+            "direction": "I",
+            "left": "0",
+            "right": "0"
+          },
+          "TRI_O": {
+            "physical_name": "GPIO2_0_tri_o",
+            "direction": "O",
+            "left": "0",
+            "right": "0"
+          },
+          "TRI_T": {
+            "physical_name": "GPIO2_0_tri_t",
+            "direction": "O",
+            "left": "0",
+            "right": "0"
           }
         }
       }
@@ -1789,7 +1814,16 @@
         "xci_path": "ip\\embsys_axi_gpio_0_0\\embsys_axi_gpio_0_0.xci",
         "inst_hier_path": "axi_gpio_0",
         "parameters": {
+          "C_ALL_INPUTS_2": {
+            "value": "0"
+          },
           "C_ALL_OUTPUTS": {
+            "value": "1"
+          },
+          "C_GPIO2_WIDTH": {
+            "value": "1"
+          },
+          "C_IS_DUAL": {
             "value": "1"
           }
         }
@@ -1961,6 +1995,12 @@
         "interface_ports": [
           "gpio_rtl_0",
           "axi_gpio_0/GPIO"
+        ]
+      },
+      "axi_gpio_0_GPIO2": {
+        "interface_ports": [
+          "GPIO2_0",
+          "axi_gpio_0/GPIO2"
         ]
       },
       "axi_uartlite_0_UART": {

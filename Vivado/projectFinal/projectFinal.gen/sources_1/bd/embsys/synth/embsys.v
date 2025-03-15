@@ -1,7 +1,7 @@
 //Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-//Date        : Fri Mar  7 07:40:39 2025
+//Date        : Mon Mar 10 10:44:11 2025
 //Host        : PDXKSTEINER running 64-bit major release  (build 9200)
 //Command     : generate_target embsys.bd
 //Design      : embsys
@@ -11,7 +11,10 @@
 
 (* CORE_GENERATION_INFO = "embsys,IP_Integrator,{x_ipVendor=xilinx.com,x_ipLibrary=BlockDiagram,x_ipName=embsys,x_ipVersion=1.00.a,x_ipLanguage=VERILOG,numBlks=37,numReposBlks=23,numNonXlnxBlks=4,numHierBlks=14,maxHierDepth=1,numSysgenBlks=0,numHlsBlks=0,numHdlrefBlks=1,numPkgbdBlks=0,bdsource=USER,da_axi4_cnt=10,da_board_cnt=4,da_clkrst_cnt=1,da_mb_cnt=1,synth_mode=OOC_per_IP}" *) (* HW_HANDOFF = "embsys.hwdef" *) 
 module embsys
-   (RGB2_Blue_0,
+   (GPIO2_0_tri_i,
+    GPIO2_0_tri_o,
+    GPIO2_0_tri_t,
+    RGB2_Blue_0,
     RGB2_Green_0,
     RGB2_Red_0,
     UART_0_rxd,
@@ -43,6 +46,9 @@ module embsys
     rgbRED_0,
     seg_0,
     sw_0);
+  (* X_INTERFACE_INFO = "xilinx.com:interface:gpio:1.0 GPIO2_0 TRI_I" *) input [0:0]GPIO2_0_tri_i;
+  (* X_INTERFACE_INFO = "xilinx.com:interface:gpio:1.0 GPIO2_0 TRI_O" *) output [0:0]GPIO2_0_tri_o;
+  (* X_INTERFACE_INFO = "xilinx.com:interface:gpio:1.0 GPIO2_0 TRI_T" *) output [0:0]GPIO2_0_tri_t;
   output RGB2_Blue_0;
   output RGB2_Green_0;
   output RGB2_Red_0;
@@ -84,6 +90,9 @@ module embsys
   wire Vaux2_0_1_V_P;
   wire Vaux3_0_1_V_N;
   wire Vaux3_0_1_V_P;
+  wire [0:0]axi_gpio_0_GPIO2_TRI_I;
+  wire [0:0]axi_gpio_0_GPIO2_TRI_O;
+  wire [0:0]axi_gpio_0_GPIO2_TRI_T;
   wire [31:0]axi_gpio_0_GPIO_TRI_O;
   wire axi_timer_0_generateout0;
   wire axi_timer_0_interrupt;
@@ -351,6 +360,8 @@ module embsys
   wire [15:0]sw_0_1;
   wire [4:0]xadc_wiz_0_channel_out;
 
+  assign GPIO2_0_tri_o[0] = axi_gpio_0_GPIO2_TRI_O;
+  assign GPIO2_0_tri_t[0] = axi_gpio_0_GPIO2_TRI_T;
   assign RGB2_Blue_0 = nexys4io_0_RGB2_Blue;
   assign RGB2_Green_0 = nexys4io_0_RGB2_Green;
   assign RGB2_Red_0 = nexys4io_0_RGB2_Red;
@@ -364,6 +375,7 @@ module embsys
   assign Vaux3_0_1_V_N = Vaux3_0_v_n;
   assign Vaux3_0_1_V_P = Vaux3_0_v_p;
   assign an_0[7:0] = nexys4io_0_an;
+  assign axi_gpio_0_GPIO2_TRI_I = GPIO2_0_tri_i[0];
   assign axi_uartlite_0_UART_RxD = UART_0_rxd;
   assign btnC_0_1 = btnC_0;
   assign btnD_0_1 = btnD_0;
@@ -453,7 +465,10 @@ module embsys
         .s00_axi_wstrb(microblaze_0_axi_periph_M07_AXI_WSTRB),
         .s00_axi_wvalid(microblaze_0_axi_periph_M07_AXI_WVALID));
   embsys_axi_gpio_0_0 axi_gpio_0
-       (.gpio_io_o(axi_gpio_0_GPIO_TRI_O),
+       (.gpio2_io_i(axi_gpio_0_GPIO2_TRI_I),
+        .gpio2_io_o(axi_gpio_0_GPIO2_TRI_O),
+        .gpio2_io_t(axi_gpio_0_GPIO2_TRI_T),
+        .gpio_io_o(axi_gpio_0_GPIO_TRI_O),
         .s_axi_aclk(microblaze_0_Clk),
         .s_axi_araddr(microblaze_0_axi_periph_M02_AXI_ARADDR[8:0]),
         .s_axi_aresetn(rst_clk_wiz_1_100M_peripheral_aresetn),
