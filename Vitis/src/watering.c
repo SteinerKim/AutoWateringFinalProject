@@ -50,8 +50,10 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 #define N4IO_BASEADDR		    XPAR_NEXYS4IO_0_S00_AXI_BASEADDR
 #define N4IO_HIGHADDR		    XPAR_NEXYS4IO_0_S00_AXI_HIGHADDR
 
-#define BTN_CHANNEL		1
-#define SW_CHANNEL		2
+/* DHT22 temp sensor additions, using gpio channel 2 */
+#define GPIO_DEVICE_ID          XPAR_GPIO_0_DEVICE_ID
+#define GPIO_CHANNEL            ( 2 )
+#define DHT22_DATA_PIN          ( 0x1 )
 
 #define mainQUEUE_LENGTH					( 10 )
 
@@ -65,6 +67,7 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 XUartLite UartLite;
 XUartLite_Config *Config;
 XSysMon SysMonInst;  // Create an instance of the SysMon driver
+XGpio Gpio;
 
 //Function Declarations
 static uint32_t prvSetupHardware( void );
@@ -74,9 +77,11 @@ static void ParseData(uint8_t *buffer, int length);
 void vParseInputTask( void *pvParams);
 void que_rx (void *p);
 void que_tx (void *p);
+void vReadTemperatureTask(void *pvParameters);
 
-// Declare a Semaphore
+// Declare a Semaphores
 xSemaphoreHandle binary_sem;
+xSemaphoreHandle temp_sem;
 
 /* The queue used by the queue send and queue receive tasks. */
 static xQueueHandle xQueue = NULL;
@@ -88,6 +93,12 @@ static void vUART_ISR(void* pvParams) {
     xSemaphoreGiveFromISR(binary_sem,NULL);
 }
 
+// structure passed to Display task
+typedef struct {
+	uint16_t taskID;		// 0 = Parse task, 1 = Temp task
+	uint16_t data;	// current set point
+} DispMessage;
+
 int main(void)
 {
 	BaseType_t xReturn;
@@ -97,13 +108,14 @@ int main(void)
 	//Initialize the HW
 	prvSetupHardware();
 
-	SendData("hello");
-
-	//Create Semaphore
+	//Create Semaphore for ISR
 	vSemaphoreCreateBinary(binary_sem);
 
+	// create semaphore for temp sensor
+	vSemaphoreCreateBinary(temp_sem);
+
 	/* Create the queues */
-	xQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof( uint16_t ) );
+	xQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof(DispMessage) );
 	xTxQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof( uint16_t ) );
 
 	/* Sanity check that the queue was created. */
@@ -116,6 +128,7 @@ int main(void)
 				 NULL,
 				 2,
 				 NULL );
+	configASSERT(xReturn == pdPASS);
 
 	//Create receive UART data task
 	xReturn = xTaskCreate( que_rx,
@@ -124,6 +137,7 @@ int main(void)
 				NULL,
 				2,
 				NULL );
+	configASSERT(xReturn == pdPASS);
 
 	// Create UART TX task
 	xReturn = xTaskCreate( que_tx,
@@ -132,6 +146,16 @@ int main(void)
 					NULL,
 					2,
 					NULL );
+	configASSERT(xReturn == pdPASS);
+
+	// Create the temperature reading task
+	xReturn =xTaskCreate( vReadTemperatureTask,
+			"ReadTemperature",
+			configMINIMAL_STACK_SIZE,
+			NULL,
+                    2,
+			NULL);
+	configASSERT(xReturn == pdPASS);
 
 	XSysMon_Reset(&SysMonInst);
 
@@ -174,6 +198,9 @@ static uint32_t prvSetupHardware( void )
 		XUartLite_EnableInterrupt(&UartLite);
 	}
 
+    // Initialize the GPIO driver
+    XGpio_Initialize(&Gpio, GPIO_DEVICE_ID);
+
 	// initialize the Nexys4 driver
 	uint32_t status = NX4IO_initialize(N4IO_BASEADDR);
 	if (status != XST_SUCCESS){
@@ -195,6 +222,7 @@ static uint32_t prvSetupHardware( void )
 static void ParseData(uint8_t *buffer, int length) {
 	// Implement your parsing logic based on your protocol
 	uint16_t sensor_value = 0;
+
 	for (int i = 0; i < length; i++) {
 		if ((buffer[i] == 's') || (buffer[i] == 'S')) {		// handle stop watering
 			i++;
@@ -230,6 +258,9 @@ static void ParseData(uint8_t *buffer, int length) {
 				buffer[i+1] = '\0';
 				xil_printf("invalid protocol %s\r\n", buffer);
 			}
+		} else if ((buffer[i] == 't') || (buffer[i] == 'T')) {
+			xSemaphoreGive( temp_sem );
+		//	xQueueSend( xTempQueue, &sensor_value, mainDONT_BLOCK );
 		} else {
 			buffer[i+1] = '\0';
 			xil_printf("invalid protocol %s\r\n", buffer);
@@ -245,6 +276,8 @@ void vParseInputTask( void *pvParams)
 	uint8_t data;
 	uint8_t buffer[BUFFER_SIZE];
 	uint16_t index = 0;
+	DispMessage msg;
+	msg.taskID = 0;
 
 	while(1) {
 		if(xSemaphoreTake(binary_sem,500)){
@@ -259,8 +292,8 @@ void vParseInputTask( void *pvParams)
 				buffer[index] = data;
 				++index;
 			}
-
-			xQueueSend( xQueue, &data, mainDONT_BLOCK );
+			msg.data = data;
+			xQueueSend( xQueue, &msg, mainDONT_BLOCK );
 		}
 		else
 			xil_printf("Semaphore time out\r\n");
@@ -273,10 +306,13 @@ void vParseInputTask( void *pvParams)
 // Prints each character read.  Mainly for visual.
 void que_rx (void *p)
 {
-	uint16_t data;
+	DispMessage msg;
 	while(1){
-		xQueueReceive( xQueue, &data, portMAX_DELAY );
-		xil_printf("Queue Received: %c\r\n",data);
+		xQueueReceive( xQueue, &msg, portMAX_DELAY );
+		if (msg.taskID == 0)
+			xil_printf("Queue Received: %c\r\n",msg.data);
+		else if (msg.taskID == 1)
+			xil_printf("Temp Received: %d Humidity=%d\r\n", (msg.data&0xFF00)>>8, msg.data&0xFF);
 	}
 	vTaskDelete(NULL);
 }
@@ -287,7 +323,7 @@ void que_tx (void *p)
 {
 	uint16_t data;
 	const char ACK = 'A';
-	while(1){
+	while(1) {
 		xQueueReceive( xTxQueue, &data, portMAX_DELAY );
 		// copilot mentioned the disable/enable interrupt
 		XUartLite_DisableInterrupt(&UartLite);
@@ -296,6 +332,81 @@ void que_tx (void *p)
 		XUartLite_EnableInterrupt(&UartLite);
 	}
 	vTaskDelete(NULL);
+}
+
+void wait_for_response(void)
+{
+    while (XGpio_DiscreteRead(&Gpio, GPIO_CHANNEL) & 1);
+    // Wait for the DATA pin to go high (80 us)
+    while (!(XGpio_DiscreteRead(&Gpio, GPIO_CHANNEL) & 1));
+    // Wait for the DATA pin to go low again (indicating data transmission start)
+    while (XGpio_DiscreteRead(&Gpio, GPIO_CHANNEL) & 1);
+}
+
+// task to read temperature/humidity DHT22 sensor
+// Code from copilot and chatgpt morphed together in pieces to create
+// a working task.
+void vReadTemperatureTask(void *pvParameters)
+{
+    uint32_t data;
+    uint8_t databytes[5]; // 5 bytes to store the data
+    uint16_t humidity, temperature, checksum;
+    uint16_t request;
+    DispMessage msg;
+    msg.taskID = 1;
+
+    for (;;)
+    {
+		// Set GPIO as output
+		XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
+
+		// Send start signal
+		XGpio_DiscreteWrite(&Gpio, GPIO_CHANNEL, 0);
+		vTaskDelay(pdMS_TO_TICKS(18));  // Wait for at least 18ms
+		XGpio_DiscreteWrite(&Gpio, GPIO_CHANNEL, 1);
+		usleep(30); //vTaskDelay(pdMS_TO_TICKS(1));   // Wait for 20-40us
+
+		// Set GPIO as input
+		XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x1);
+
+		// Wait for DHT22 response (timing code to be added)
+		wait_for_response();
+
+		// Now read the response of the sensor and then proceed to data read.
+		// Read 40 bits from DHT22 (5 bytes)
+		uint32_t high_pulse_duration;
+
+		// Read 40 bits of data
+		for (int j = 0; j < 5; ++j) {
+			for (int i = 0; i < 8; i++) {
+
+				while (XGpio_DiscreteRead(&Gpio, GPIO_CHANNEL) == 0);
+				usleep(30);
+				data = XGpio_DiscreteRead(&Gpio, GPIO_CHANNEL);
+				// Shift in the data bit
+				databytes[j] <<= 1;
+				if (data != 0) {
+					databytes[j] |= 1;
+				}
+				while (XGpio_DiscreteRead(&Gpio, GPIO_CHANNEL) == 1);
+			}
+		}
+		// Process temperature data
+		humidity = (float)((databytes[0]<<8) + (databytes[1])) / 10.0;
+		temperature = (float)((databytes[2]<<8) + (databytes[3])) / 10.0;
+
+
+	//	xil_printf("Humidity: %d%%, Temperature: %d°C pulse=%d\r\n", humidity, (int)temperature, high_pulse_duration);
+		if (xSemaphoreTake(temp_sem,0)) {
+			msg.data = temperature<<8 | humidity;
+			xQueueSend( xTxQueue, &msg.data, mainDONT_BLOCK );
+			xQueueSend( xQueue, &msg, mainDONT_BLOCK );
+		}
+
+        // Delay before the next reading
+        vTaskDelay(pdMS_TO_TICKS(2000));  // DHT22 minimum sampling period is 2 seconds
+    }
+    vTaskDelete(NULL);
 }
 
 // Transmits a buffer of data to the UART.
