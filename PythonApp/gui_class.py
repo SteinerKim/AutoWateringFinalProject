@@ -1,376 +1,234 @@
-'''
-Gui Class
+"""
+GUI Class
 
-@author Cameron Castillo
-@author Kim Steiner
+@author
+    Cameron Castillo
+    Kim Steiner
 
 @brief
+    A Python GUI for the ECE544 final project, which interfaces with the watering system.
+    The GUI allows users to:
+    
+    1. Set a water percentage threshold.
+    2. View moisture data graphically over time.
+    3. Toggle the watering system on and off.
 
-A python file which creates a class to setup a GUI for 
-the ECE544 final project. The gui is used along with
-the serial_comm.py class which sends and recieves data
-from the Nexys7 FPGA board. The purpose of the GUI is 
-to allow the user to perform several actions:
+    Moisture values are displayed as percentages, with real-time updates.
 
-    1: Set a water percentage threshold
-    2: View the moisture data graphically over time
-    3: Toggle the watering system on and off
+@note
+    The GUI is built using Tkinter and interfaces with the board via the Interface class.
+"""
 
-Moisture values are returned as a percentage of the max
-range of values from the sensor maximum. This allows 
-the UART to only send and recieve a byte for watering
-values. All data on the plot will be displayed in terms 
-of percentages. The plot should make requests over a 
-user-specified period back to the watering system.
-
-@note Will be packaged into an executable application
-and designed via tkinter
-
-'''
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
 import numpy as np
 import time as t
+import logging
 
-#for plotting functions in tkinter
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk) 
-
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from queue import Queue
 from board_interface import Interface
 
-class gui:
-    '''
-    gui
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+
+class GUI:
+    """
     @brief
+    GUI class for the watering system.
 
-    A class to hold GUI functionality and allows 
-    main to only instantiate to start operation.
+    Handles serial communication, graphical updates, and user interactions.
+    """
 
-    '''
-
-
-    def __init__(root, data_interval, passed_points=None):
-        '''
-        init
-
+    def __init__(self, data_interval, passed_points=None):
+        """
         @brief
+        Initializes the GUI and sets up serial communication.
 
-        Called at gui instantiation. Use to setup object for 
-        serial communication instantaneously as part of self.
-
-        @param self instantiated class object
-        @param data_interval variable holding value of time 
-        between data points
-        @param passed_points a list of duples representing 
-        points in watering map; default None
-        
-        @return nothing -- run GUI output function by default
-
-        '''
-        #create tkinter object
+        @param data_interval The interval in seconds between data points.
+        @param passed_points A list of tuples representing historical data (optional).
+        """
         self.root = tk.Tk()
+        self.root.title("Microblaze Watering System")
+        self.root.geometry("600x600")
 
-        #create class param for data points
-        if(passed_points != None):
-            #TODO: Create a function to parse passed_points
-            #from txt file or some other format.
-            print("WARNING: Passed point functionality is not currently
-                  supportted. Starting blank data")
-            self.data = np.zeros((1,2))
+        # Initialize data
+        if passed_points:
+            logging.warning("Passed point functionality is not currently supported. Starting blank data.")
+            self.data = np.zeros((1, 2))
         else:
-            self.data = np.zeros((1,2))
+            self.data = np.zeros((1, 2))
 
-        #create class-wide vars
-        self.threshold = 50         #start at half percentage value
-        self.watering_state = False #boolean expression for on/off watering
-        self.water_override = False #boolean expression to override threshold
+        # GUI variables
+        self.threshold = 50  # Default threshold at 50%
+        self.watering_state = False
+        self.water_override = False
         self.data_interval = data_interval
 
-        #Create queues to other threads
-        self.interval_queue = Queue()    #Queue to send interval data to handler
-        self.meas_queue = Queue()        #Queue to receive measurement data
+        # Queues for inter-thread communication
+        self.interval_queue = Queue()
+        self.meas_queue = Queue()
 
-        #create board_interface
-        self.board = Interface(interval_queue, meas_queue) 
-        
-        #get start time in minutes
-        self.start_time = t.Time()
-        
-        #TODO: Add functionality to connect to a certain COM port
+        # Create board interface
+        self.board = Interface(self.interval_queue, self.meas_queue)
 
-        #start gui @ end
+        # Start time tracking
+        self.start_time = t.time()
+
+        # Start GUI
         self.start_gui()
 
-        #disconnect uart when done
+        # Disconnect UART when done
         self.board.uart.disconnect()
 
     def start_gui(self):
-        '''
-        start_gui
-
+        """
         @brief
-
-        Setup and start tkinter gui. Use this at the 
-        end of init function to run function as main.
-
-        @return should only return at pgm close
-
-        '''
-        #initialize gui layout
+        Initializes and starts the Tkinter GUI.
+        """
         self.gui_layout()
-
-        #start daemon thread to continuously check data
-        self.root.after(0, start_plot_thread)
-
-        #start gui
+        self.root.after(1000, self.plot_update_thread)
         self.root.mainloop()
-
-        #file collected datapoints as .txt file
-        #TODO: Create function to do this....
-        
+    
     def gui_layout(self):
-        '''
-        gui_layout
-
+        """
         @brief
+        Defines the GUI layout and creates widgets.
+        """
+        # Configure the main layout with grid
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
 
-        Use this function to define the structure of
-        the GUI before starting.
-
-        @note Created with assistance from ChatGPT
-
-        '''
-        #setup window and window size
-        self.root.Title("Microblaze Watering system")
-        self.root.geometry("500x500")
+        # Create plot frame and add it to the left
         self.plot_frame = ttk.Frame(self.root)
-        self.plot_frame.pack(fill=tk.BOTH, expand=True)        
+        self.plot_frame.grid(row=0, column=0, rowspan=5, sticky='nsew', padx=10, pady=10)
 
-        #create plot
+        # Create plot
         fig = self.plot_window()
         self.canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         self.canvas.draw()
-        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        self.canvas.grid(row=0, col=0, rowspan=5, padx=10, pady=10)
+        self.canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
-        #create buttons
-        #   send command over uart
-        self.cmd_input = tk.Entry(
-                self.root
-                ).grid(row=0, col=2, padx=10, pady=10)
-        self.cmd_button = tk.Button(
-                self.root,
-                text="Send Cmd",
-                command=self.handle_send_cmd
-                ).grid(row=0, col=3, padx=10, pady=10)
+        # Command input and button
+        self.cmd_input = tk.Entry(self.root)
+        self.cmd_input.grid(row=0, column=2, padx=10, pady=10)
 
-        #   override watering threshold
-        self.override_button = tk.Button(
-                self.root,
-                text="Force Toggle",
-                command=self.handle_override
-                ).grid(row=1, col=3, padx=10, pady=10)
+        self.cmd_button = tk.Button(self.root, text="Send Cmd", command=self.handle_send_cmd)
+        self.cmd_button.grid(row=0, column=3, padx=10, pady=10)
 
-        #   Start collecting data
-        self.start_button = tk.Button(
-                self.root,
-                text="Start",
-                bg='green',
-                command=self.board.handle_start_thread
-                ).grid(row=4, col=3, padx=10, pady=10)
-        
-        #   set water check time
-        tk.Label(
-                self.root,
-                text="Measurment Interval[min]:"
-                ).grid(row=2, col=2, padx=10, pady=10)
-        self.time_interval = tk.Entry(
-                self.root
-                ).grid(row=2, col=3, padx=10, pady=10)
-        self.interval_check = tk.Button(
-                self.root,
-                text="Update",
-                command=self.handle_interval
-                ).grid(row=3, col=3, padx=10, pady=10)
-        
-        #create slider for value of threshold
-        tk.Scale(
-                self.root,
-                variable=self.threshold
-                ).grid(row=0, col=1, padx=10, pady=10)
+        # Water override button
+        self.override_button = tk.Button(self.root, text="Force Toggle", command=self.handle_override)
+        self.override_button.grid(row=1, column=3, padx=10, pady=10)
+
+        # Start button
+        self.start_button = tk.Button(self.root, text="Start", bg="green", command=self.board.handle_start_thread)
+        self.start_button.grid(row=4, column=3, padx=10, pady=10)
+
+        # Interval input
+        tk.Label(self.root, text="Measurement Interval (min):").grid(row=2, column=2, padx=10, pady=10)
+
+        self.time_interval = tk.Entry(self.root)
+        self.time_interval.grid(row=2, column=3, padx=10, pady=10)
+
+        self.interval_check = tk.Button(self.root, text="Update", command=self.handle_interval)
+        self.interval_check.grid(row=3, column=3, padx=10, pady=10)
+
+        # Threshold slider
+        self.threshold_slider = tk.Scale(self.root, from_=0, to=100, orient="vertical", label="Threshold")
+        self.threshold_slider.set(self.threshold)
+        self.threshold_slider.grid(row=0, column=1, padx=10, pady=10)
+
+        # Temperature display
+        tk.Label(self.root, text="Temperature (C):").grid(row=5, column=2, padx=10, pady=10, sticky='e')
+        self.temp_display = tk.Entry(self.root, state='normal', width=10)
+        self.temp_display.grid(row=5, column=3, padx=10, pady=10, sticky='w')
+        self.temp_display.insert(0, "--")
+        self.temp_display.config(state='readonly')
+
+        # Humidity display
+        tk.Label(self.root, text="Humidity (%):").grid(row=6, column=2, padx=10, pady=10, sticky='e')
+        self.humidity_display = tk.Entry(self.root, state='normal', width=10)
+        self.humidity_display.grid(row=6, column=3, padx=10, pady=10, sticky='w')
+        self.humidity_display.insert(0, "--")
+        self.humidity_display.config(state='readonly')
 
     def plot_window(self):
-        '''
-        plot_window
-
+        """
         @brief
+        Creates the moisture graph.
 
-        Create a figure object from matplotlib which can
-        be added to the canvas in the GUI. Passed in point
-        tuple values in self.data. Threshold plot value
-        is also passed in with self.water_threshold.
+        @return The matplotlib figure object.
+        """
+        fig, ax = plt.subplots(facecolor="black")
 
-        @return figure object
+        # Extract data
+        t_values = self.data[:, 0]
+        water_values = self.data[:, 1]
 
-        @note Created with assistance from ChatGPT
-
-        '''
-        # Create a figure and axis
-        fig, ax = plt.subplots(facecolor='black')
-
-        #Pull point values from tuples in list
-        t = self.data[:][0]
-        water_val = self.data[:][1]
-
-        #Plot available
-        ax.plot(t, water_val, 'wo',
-                markersize=4, label="Data Points")
-        
-        #create threshold line
-        ax.axhline(y=self.water_threshold, color='w',
-                   linestyle='--', label='Threshold')
-
-        #create background and plotting colors
-        ax.set_facecolor('black')
-
-        #create axis labels and name
-        ax.set_xlabel("Time [Minutes]", color='white')
-        ax.set_ylabel("Moisture Percentage", color='white')
+        ax.plot(t_values, water_values, "wo", markersize=4, label="Data Points")
+        ax.axhline(y=self.threshold, color="w", linestyle="--", label="Threshold")
+        ax.set_facecolor("black")
+        ax.set_xlabel("Time [Minutes]", color="white")
+        ax.set_ylabel("Moisture Percentage", color="white")
         ax.legend()
-
-        #determine max plot xdim
-        x_ticks = self.determine_xdim(t)
-
-        #create plot dimensions
-        if (x_ticks[-1] < 60):
-            ax.set_xticks([10*i for i in range(7)])
-            ax.xlim(-2,60)
-        else:
-            ax.set_xticks(x_ticks)
-            ax.xlim(-2,x_ticks[-1])
-        ax.ylim(-2,110)
-        ax.yticks([0, 25, 50, 75, 100], 
-                   ['0%', '25%', '50%', '75%', '100%'])
 
         return fig
 
-    def determine_xdim(self, t):
-        '''
-        determine xdim
-
-        @brief
-
-        Use this function to create a list of tick values
-        for plotting function. Goes from 0 to the largest
-        multiple of 10 in the x_ticks.
-        
-        @param t numpy array of time values
-
-        @return list of x_ticks
-
-        '''
-        #get multiple number
-        ten_mult = t[-1]//10
-        remainder = t[-1]%10
-        
-        x_ticks = [10*i for i in range(ten_mult+1)]
-
-        #check whether remainder is > 0
-        if(remainder > 0):
-            x_ticks.append(x_ticks[-1]+10)
-
-        return x_ticks
-
-    #button functions:
-
     def handle_send_cmd(self):
-        '''
-        handle send command
-
+        """
         @brief
-
-        button handling function for send command. Use
-        to send data from the command box to the uart.
-
-        '''
-        #parse command ('cmd[0]' + 'data[1:]')
-        box_in = self.cmd_input.get()
-
-
-        #send over uart
-        if(len(box_in) > 1):
-            self.board.uart.send(box_in[0], data=box_in[1:])
-        else:
-            self.board.uart.send(box_in[0])
-
+        Handles command button presses and sends data over UART.
+        """
+        cmd = self.cmd_input.get()
+        if cmd:
+            self.board.uart.send(cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
 
     def handle_override(self):
-        '''
-        handle override
-
+        """
         @brief
-
-        Button handling for override function. Use to 
-        toggle the watering system on and off automatically
-
-        '''
-        #set uart state opposite as previous
-        self.watering_state = True 
-        self.water_override = not(self.water_override)
-
-        #send change in state
+        Toggles the watering system manually.
+        """
+        self.water_override = not self.water_override
+        self.watering_state = self.water_override
         self.board.toggle_water(self.watering_state)
 
     def handle_interval(self):
-        '''
-        handle interval
-
+        """
         @brief
-
-        Button handling for interval override. Use to 
-        write a new value for the time interval from 
-        the user input box.
-
-        '''
-        #write value of interval from box
-        self.data_interval = self.time_interval.get()
-
-        #put data into queue
-        self.interval_queue.put(self.data_interval)
+        Updates the measurement interval based on user input.
+        """
+        try:
+            self.data_interval = int(self.time_interval.get()) * 60  # Convert to seconds
+            self.interval_queue.put(self.data_interval)
+        except ValueError:
+            logging.warning("Invalid interval input. Please enter a number.")
 
     def plot_update_thread(self):
         """
-        @brief 
-
-        Update the plot by periodically checking the measurement
-        queue from the board measure thread.
+        @brief
+        Updates the plot periodically with new data from the measurement queue.
         """
-        #check if queue has data
-        if !self.meas_queue.empty():
-            #if it does, update data tuple
+        if not self.meas_queue.empty():
             data = self.meas_queue.get()
-            time = t.Time - self.start_time
-            self.data.append((time, data))
-            
-            #rerun plot write function
+            time_elapsed = t.time() - self.start_time
+            self.data = np.vstack((self.data, [time_elapsed, data]))
+
             fig = self.plot_window()
-            self.canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
+            self.canvas.figure = fig
             self.canvas.draw()
 
-        #check if moisture value is above threshold
-        if self.data[-1][1] >= self.threshold && !self.water_override:
+        # Check if moisture exceeds threshold
+        last_water_state = self.watering_state
+        if self.data[-1, 1] >= self.threshold and not self.water_override:
             self.watering_state = False
-            self.board.toggle_water(self.watering_state)
-        else if self.data[-1][1] < self.threshold && !self.water_override:
+        elif self.data[-1, 1] < self.threshold and not self.water_override:
             self.watering_state = True
+
+        #write if different
+        if self.watering_state != last_water_state:
             self.board.toggle_water(self.watering_state)
-            
-        #wait 1 s before running again
+        
+        #Perform task again....
         self.root.after(1000, self.plot_update_thread)
-
-
-
-
-

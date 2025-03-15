@@ -1,160 +1,144 @@
-'''
+"""
 Board Interface
 
-@author Cameron Castillo
-@author Kim Steiner
+@authors:
+- Cameron Castillo
+- Kim Steiner
 
 @brief
 
-This class is meant to setup a separate thread for the GUI
-to properly send and receive data from the Microblaze. Samples
-for the GUI are received on a periodic basis based on an 
-interval defined in a text box in the GUI.
+This class sets up a separate thread for the GUI to properly send 
+and receive data from the Microblaze. Samples for the GUI are received 
+on a periodic basis based on an interval defined in a text box in the GUI.
 
-At the time interval, the program must send a character to the
-Microblaze and receive a response. The response is loaded to a
-queue to be written onto the plot on the GUI. This class handles
-the creation of the thread and underlying helper functions.
+At each interval, the program sends a request to the Microblaze and 
+receives a response, which is placed in a queue for the GUI to process. 
 
-'''
+This class manages the threading and communication logic.
+
+@note this class was written by the authors and edited/reformatted by ChatGPT
+"""
 
 import time
 import queue
-from threading import *
+import threading
+import logging
 from serial_class import uart
-import logging as log
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 class Interface:
+    def __init__(self, interval_queue, meas_queue, uart_obj=None):
+        """
+        Initializes the Interface class.
 
-    def __init__(self, interval_queue, meas_queue, uart = None):
-        '''
-        init
-        
-        @param interval_queue pass in time interval from gui
-        (in seconds)
-        @param meas_queue pass out measurement data
-        @param uart pass in uart object from GUI
-
-        '''
-        #logger
-        logger = log.getLogger(__name__)
-
-        #create uart object
-        if (uart_obj != None):
-            self.uart = uart_obj
-        else:
-            self.uart = uart()
-
-        #Create Queue objects back to gui
+        @param interval_queue: Queue for receiving time intervals from the GUI (in seconds)
+        @param meas_queue: Queue for sending measurement data to the GUI
+        @param uart_obj: UART object for communication (if None, a new instance is created)
+        """
+        self.uart = uart_obj if uart_obj else uart()
         self.interval_queue = interval_queue
         self.measure_queue = meas_queue
+        self.timer_task = None
+        self.interval_task = None
+        self.interval = self.get_initial_interval()
 
-        #create interval
+    def get_initial_interval(self):
+        """
+        Fetch the initial interval from the queue or use a default value.
+        """
         try:
-            self.interval_queue.get(timeout=10)
-        except self.interval_queue.Empty as e:
-            logger.warning(f'Empty iterval queue: {e}. Check that gui is writing \
-                    to the queue before startup.')
-            self.interval = min_to_sec(15) #default 15 minutes
-        except self.interval_queue.ShutDown as e:
-            logger.warning(f'Interval queue shut down: {e}')
+            return self.interval_queue.get(timeout=10)
+        except queue.Empty:
+            logger.warning("Empty interval queue. Using default interval: 15 minutes.")
+            return self.min_to_sec(15)
+        except Exception as e:
+            logger.warning(f"Interval queue error: {e}")
+            return self.min_to_sec(15)
 
     def handle_start_thread(self):
-        '''
-        handle start thread
+        """
+        Starts the timer and interval-checking threads.
+        """
+        self.start_time = time.time()
 
-        @brief Handle the button press from the GUI and pass into the 
-        timer thread
+        if self.timer_task is None:
+            logger.info("Starting Timer Thread....")
+            self.timer_task = threading.Thread(target=self.timer_thread, daemon=True)
+            self.timer_task.start()
 
-        '''
-        self.start_time = time.Time() #get time in seconds
-        if self.timer_task == None:
-            self.timer_task = Thread(target=timer_thread).start()
-
-        #create another thread to check for new interval
-        if self.interval_task == None:
-            self.interval_task = Thread(target=interval_thread).start()
-
+        if self.interval_task is None:
+            logger.info("Starting Interval Thread....")
+            self.interval_task = threading.Thread(target=self.interval_thread, daemon=True)
+            self.interval_task.start()
 
     def interval_thread(self):
-        '''
-        Interval Thread
-
-        @brief
-
-        Periodically check interval queue to get data from the gui at 
-        a defined rate.
-        '''
-        if !self.interval_queue.empty():
-            self.interval = self.interval_queue.get()
-            logger.info(f'Interval Updated: {self.interval}')
+        """
+        Periodically checks the interval queue for updates from the GUI.
+        """
+        while True:
+            try:
+                new_interval = self.interval_queue.get(timeout=1)
+                self.interval = new_interval
+                logger.info(f"Interval updated: {self.interval} seconds")
+            except queue.Empty:
+                continue
+            except Exception as e:
+                logger.warning(f"Error in interval thread: {e}")
 
     def timer_thread(self):
-        '''
-        Timer Thread
+        """
+        Periodically requests data from the Microblaze at the defined interval.
+        """
+        while True:
+            if time.time() - self.start_time >= self.interval:
+                self.start_time = time.time()
 
-        @brief Periodically check time interval and send requests back
-        to Microblaze for data
-
-        '''
-        if(self.start_time - time.Time() >= self.interval):
-            #reset start time
-            self.start_time = time.Time()
-
-            #send query via request_moisture; add datapoint to queue
-            try:
-                self.meas_queue.put(request_moisture())
-            except self.meas_queue.Full as e:
-                logger.warning(f'Measure queue write error: {e}. Check that \
-                        there is a proper timeslot to write from.')
-            except self.meas_queue.ShutDown as e:
-                logger.warning(f'Measure queue shut down: {e}')
+                try:
+                    moisture_data = self.request_moisture()
+                    if moisture_data is not None:
+                        self.measure_queue.put(moisture_data)
+                except queue.Full:
+                    logger.warning("Measurement queue is full. Data may be lost.")
 
     def toggle_water(self, water_state):
-        '''
-        Toggle Water
+        """
+        Toggles the watering state of the board.
 
-        @brief
+        @param water_state: Boolean indicating whether watering should be ON (True) or OFF (False).
+        """
+        logger.info(f"Toggling water state: {'ON' if water_state else 'OFF'}")
+        self.uart.send('W' if water_state else 'S')
 
-        Send command to toggle the watering state of the board. 
-
-        @param water_state boolean expressing watering state from gui
-        
-        '''
-        logger.info(f'Toggling water state: {water_state}')
-        self.uart.send('W') if water_state else self.uart.send('S')
-        
     def request_moisture(self):
-        '''
-        Request Moisture
+        """
+        Sends a request for moisture data over UART.
 
-        @brief send a uart request to the Microblaze for moisture data
+        @note Read < 15000 ->100%; Read > 24500 ->0%
 
-        @return moisture percentage (None if communication failed)
+        @return: Moisture percentage (None if communication fails)
+        """
+        if not self.uart.uart.is_open:
+            logger.error("UART connection is not open!")
+            return None
 
-        '''
-        #assert good uart comm
-        assert self.uart.uart.is_open(), "No uart connection!"
-
-        #write 'N' to artix; wait for response & return
         data = self.uart.send_receive(2, 'N')
-        
-        #check that 'A' was received with a byte for percent value
-        logger.info(f'Received data: {data}')
-        if data[0] != 'A':
-            logger.warning(f'Improperly formatted data: {bytes(data)}. Check that \
-                    you got what you expected.')
-        
+        logger.info(f"Received data: {data}")
+
+        if not data or data[0] != 'A':
+            logger.warning(f"Improperly formatted data: {data}.")
+            return None
+
         return data[1]
-        
 
-    def min_to_sec(self, interval):
-        '''
-        min_to_seconds
+    @staticmethod
+    def min_to_sec(interval):
+        """
+        Converts minutes to seconds.
 
-        @brief turn minutes to seconds for interval
-        
-        '''
-        return interval*60
-
-
+        @param interval: Time in minutes
+        @return: Time in seconds
+        """
+        return interval * 60

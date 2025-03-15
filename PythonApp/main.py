@@ -21,13 +21,24 @@ before running
 of functionality.
 
 '''
-from gui_class import gui
-from serial_class import uart
+def main():
+    """
+    Main function to simulate the GUI and class interactions without a physical COM port.
+    """
+    from gui_class import GUI
+    from board_interface import Interface
+    from unittest.mock import MagicMock, patch
+    from board_interface import Interface
+    
+    with patch('board_interface.uart') as MockSerial:
+        MockSerial.return_value.read.return_value = b'A42'
+        MockSerial.return_value.write.return_value = None
+        
+        # Instantiate the GUI
+        gui = GUI(data_interval=60)
 
 
-
-if __name__ == '__main__':
-    breakpoint()
-    main_gui = gui()
+if __name__ == "__main__":
+    main()
 
 

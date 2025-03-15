@@ -1,5 +1,6 @@
 """
 Unit Tests for board_interface.py
+WRITTEN BY CHAT GPT
 """
 
 import sys
@@ -8,7 +9,7 @@ sys.path.append("C:\\Users\\Cameron\\Documents\\ECE544\\AutoWateringFinalProject
 import unittest
 import time
 from unittest.mock import MagicMock, patch
-from new_board_interface import Interface
+from board_interface import Interface
 import queue
 
 class TestInterface(unittest.TestCase):
