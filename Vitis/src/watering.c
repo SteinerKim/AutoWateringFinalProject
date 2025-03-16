@@ -96,7 +96,7 @@ static void vUART_ISR(void* pvParams) {
 
 // structure passed to Display task
 typedef struct {
-    uint16_t taskID;        // 0 = Parse task, 1 = Temp task
+    uint16_t taskID;        // 0 = Parse task, 1 = Temp task, 2 = error
     uint16_t data;          // current set point
 } DispMessage;
 
@@ -117,7 +117,7 @@ int main(void)
 
     /* Create the queues */
     xQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof(DispMessage) );
-    xTxQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof( uint16_t ) );
+    xTxQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof( DispMessage ) );
 
     /* Sanity check that the queue was created. */
     configASSERT( xQueue );
@@ -222,6 +222,8 @@ static uint32_t prvSetupHardware( void )
 static void ParseData(uint8_t *buffer, int length) {
     // Implement your parsing logic based on your protocol
     uint16_t sensor_value = 0;
+    DispMessage msg;
+    msg.taskID = 0;
 
     for (int i = 0; i < length; i++) {
         if ((buffer[i] == 's') || (buffer[i] == 'S')) {          // handle stop watering
@@ -232,6 +234,9 @@ static void ParseData(uint8_t *buffer, int length) {
                 NX4IO_setLEDs(NX4IO_getLEDS_DATA() ^ 0x2);
             } else {
                 buffer[i+1] = '\0';
+                msg.taskID = 2;
+				msg.data = 0;
+				xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("invalid protocol %s\r\n", buffer);
             }
         } else if ((buffer[i] == 'w') || (buffer[i] == 'W')) {   // handle watering
@@ -242,26 +247,39 @@ static void ParseData(uint8_t *buffer, int length) {
                 NX4IO_setLEDs(NX4IO_getLEDS_DATA() | 0x2);
             } else {
                 buffer[i+1] = '\0';
+                msg.taskID = 2;
+				msg.data = 0;
+				xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("invalid protocol %s\r\n", buffer);
             }
         } else if ((buffer[i] == 'n') || (buffer[i] == 'N')) {   // handle sensor reading
             i++;
             if (i < length && buffer[i] == '1') {                // read sensor 1 reading
                 sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
-                xQueueSend( xTxQueue, &sensor_value, mainDONT_BLOCK );
+                msg.taskID = 0;
+                msg.data = sensor_value;
+                xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
             } else if (i < length && buffer[i] == '2') {         // read sensor 2 reading
                 sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+10);  // Channel 10 corresponds to A13/ADP3
-                xQueueSend( xTxQueue, &sensor_value, mainDONT_BLOCK );
+                msg.taskID = 0;
+                msg.data = sensor_value;
+                xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("Raw Data (Channel 10): %d\r\n", sensor_value);
             } else {
                 buffer[i+1] = '\0';
+                msg.taskID = 2;
+                msg.data = 0;
+                xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("invalid protocol %s\r\n", buffer);
             }
         } else if ((buffer[i] == 't') || (buffer[i] == 'T')) {    // temp sensor read
             xSemaphoreGive( temp_sem );
         } else {
             buffer[i+1] = '\0';
+            msg.taskID = 2;
+			msg.data = 0;
+			xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
             xil_printf("invalid protocol %s\r\n", buffer);
         }
     }
@@ -320,14 +338,23 @@ void que_rx (void *p)
 // Response is an acknowledgment, 'A', followed by the two bytes of a 16 bit sensor count.
 void que_tx (void *p)
 {
-    uint16_t data;
-    const char ACK = 'A';
+    DispMessage msg;
+    char ACK = 'A';
+
     while(1) {
-        xQueueReceive( xTxQueue, &data, portMAX_DELAY );
+        xQueueReceive( xTxQueue, &msg, portMAX_DELAY );
         // copilot mentioned the disable/enable interrupt
         XUartLite_DisableInterrupt(&UartLite);
-        SendData(&ACK);    // send acknowledgement then the data
-        send_uint16_as_bytes(&UartLite, data);
+        if (msg.taskID != 2) { // valid data
+        	ACK = 'A';
+        	SendData(&ACK);    // send acknowledgement then the data
+        	send_uint16_as_bytes(&UartLite, msg.data);
+        }
+        else {
+        	ACK = 'E';
+        	SendData(&ACK);    // send error acknowledgement then the data
+        }
+
         XUartLite_EnableInterrupt(&UartLite);
     }
     vTaskDelete(NULL);
@@ -385,7 +412,7 @@ void vReadTemperatureTask(void *pvParameters)
     for (;;)
     {
         // Set GPIO as output
-        XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
+    /*    XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
 
         // Send start signal
         XGpio_DiscreteWrite(&Gpio, GPIO_CHANNEL, 0);
@@ -422,6 +449,7 @@ void vReadTemperatureTask(void *pvParameters)
         // Process temperature data, get only whole portion
         humidity = ((databytes[0]<<8) + (databytes[1])) / 10;
         temperature = ((databytes[2]<<8) + (databytes[3])) / 10;
+
         checksum = databytes[0] + databytes[1] + databytes[2] + databytes[3];
 
         // check that the checksum is correct
@@ -429,10 +457,14 @@ void vReadTemperatureTask(void *pvParameters)
             xil_printf("checksum error in temp sensor\r\n");
             continue;
         }
+                */
+    	humidity = 73;
+    	temperature = 43;
 
         if (xSemaphoreTake(temp_sem,0)) {
             msg.data = temperature<<8 | humidity;
-            xQueueSend( xTxQueue, &msg.data, mainDONT_BLOCK );
+            msg.taskID = 1;
+            xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
             xQueueSend( xQueue, &msg, mainDONT_BLOCK );
         }
 
