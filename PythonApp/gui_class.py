@@ -56,9 +56,11 @@ class GUI:
         # Initialize data
         if passed_points:
             logging.warning("Passed point functionality is not currently supported. Starting blank data.")
-            self.data = np.zeros((1, 2))
+            self.data = np.zeros((2, 1, 2))
         else:
-            self.data = np.zeros((1, 2))
+            self.data = np.zeros((2, 1, 2))
+
+        logging.info(f'data matrix shape: {self.data.shape}')
 
         # GUI variables
         self.threshold = 50  # Default threshold at 50%
@@ -160,16 +162,16 @@ class GUI:
         self.threshold_slider.grid(row=1, column=1, rowspan=7, sticky='ns', padx=10, pady=2)
 
         # Temperature display
-        tk.Label(self.root, text="Temperature (C):").grid(row=7, column=2, padx=10, pady=2, sticky='e')
+        tk.Label(self.root, text="Temperature (C):").grid(row=8, column=2, padx=10, pady=5, sticky='e')
         self.temp_display = tk.Entry(self.root, state='normal', width=10)
         self.temp_display.grid(row=8, column=3, padx=10, pady=2, sticky='w')
         self.temp_display.insert(0, "--")
         self.temp_display.config(state='readonly')
 
         # Humidity display
-        tk.Label(self.root, text="Humidity (%):").grid(row=8, column=2, padx=10, pady=2, sticky='e')
+        tk.Label(self.root, text="Humidity (%):").grid(row=9, column=2, padx=10, pady=2, sticky='e')
         self.humidity_display = tk.Entry(self.root, state='normal', width=10)
-        self.humidity_display.grid(row=9, column=3, padx=10, pady=2, sticky='w')
+        self.humidity_display.grid(row=9, column=3, padx=10, pady=5, sticky='w')
         self.humidity_display.insert(0, "--")
         self.humidity_display.config(state='readonly')   
         
@@ -189,10 +191,11 @@ class GUI:
         fig, ax = plt.subplots(facecolor="black")
 
         # Extract data
-        t_values = self.data[:, 0]
-        water_values = self.data[:, 1]
+        t_values = self.data[:, :, 0]
+        water_values = self.data[:, :, 1]
 
-        ax.plot(t_values, water_values, "wo", markersize=4, label="Data Points")
+        ax.plot(t_values[0], water_values[0], "wo", markersize=4, label="Sensor 1")
+        ax.plot(t_values[1], water_values[1], "ro", markersize=4, label="Sensor 2")
         ax.axhline(y=self.threshold_slider.get(), color="w", linestyle="--", label="Threshold")
         ax.set_facecolor("black")
         ax.set_xlabel("Time [Minutes]", color="white")
@@ -266,9 +269,11 @@ class GUI:
         Updates the plot periodically with new data from the measurement queue.
         """
         if not self.meas_queue.empty():
-            data = self.meas_queue.get()
-            time_elapsed = t.time() - self.start_time
-            self.data = np.vstack((self.data, [time_elapsed, data]))
+            breakpoint()
+            data, sensor = self.meas_queue.get()
+            time_elapsed = (t.time() - self.start_time)/60
+            self.data[sensor-1] = \
+                    np.vstack((self.data[sensor-1], [time_elapsed, data]))
 
         plt.close()
         fig = self.plot_window()
@@ -276,10 +281,10 @@ class GUI:
         self.canvas.draw()
 
         # Adding temperature and humidity check
-        self.temp_data, self.humid_data = self.board.command.get_temperature()
-        if self.temp_data != None and self.humid_data != None:
-            self.humidity_display.insert(0, self.humid_data)
-            self.temp_display.insert(0, self.temp_data)
+        temp_data, humid_data = self.board.command.get_temperature()
+        if temp_data != None and humid_data != None:
+            self.update_textbox(self.humidity_display, humid_data)
+            self.update_textbox(self.temp_display, temp_data)
 
         #check sensor threshold
         self.sensor_threshold_toggle(1)
@@ -294,9 +299,9 @@ class GUI:
         """
         # Check if moisture exceeds threshold
         last_water_state = self.watering_state
-        if self.data[-1, 1] >= self.threshold and not self.water_override:
+        if self.data[sensor-1, -1, 1] >= self.threshold and not self.water_override:
             self.watering_state = False
-        elif self.data[-1, 1] < self.threshold and not self.water_override:
+        elif self.data[sensor-1, -1, 1] < self.threshold and not self.water_override:
             self.watering_state = True
 
         #write if different
@@ -329,3 +334,18 @@ class GUI:
 
         return x_ticks
 
+    @staticmethod
+    def update_textbox(textbox, new_value):
+        """
+        @brief
+
+        Update read-only textbox by switching it to a normal
+        box before updating.
+
+        @param textbox entry widget to be updated
+        @param new_value value for textbox
+        """
+        textbox.config(state='normal') # Enable editing
+        textbox.delete(0, tk.END)  # Delete current content
+        textbox.insert(0, new_value) # Insert new content
+        textbox.config(state='readonly') # Disable editing 

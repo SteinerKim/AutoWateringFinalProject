@@ -71,7 +71,8 @@ class Interface:
 
         if self.timer_task is None:
             logger.info("Starting Timer Thread....")
-            root.after(100, self.timer_thread, root)
+            root.after(100, self.timer_thread, root, 1)
+            root.after(150, self.timer_thread, root, 2)
 
         if self.interval_task is None:
             logger.info("Starting Interval Thread....")
@@ -88,31 +89,33 @@ class Interface:
             self.interval = new_interval
             logger.info(f"Interval updated: {self.interval} seconds")
         except Empty:
-            logger.warning(f'Empty Interval Queue')
+            logger.debug(f'Empty Interval Queue')
         except Exception as e:
             logger.warning(f'Error in interval thread: {e}')
         
         #call again after 2 seconds
         root.after(2000, self.interval_thread, root)
 
-    def timer_thread(self, root):
+    def timer_thread(self, root, sensor):
         """
         Periodically requests data from the Microblaze at the defined interval.
         
         @param root: GUI root object.
+        @param sensor: sensor number for thread
         """
         if time.time() - self.start_time >= self.interval:
             self.start_time = time.time()
 
             try:
-                moisture_data = self.command.get_moisture()
+                moisture_data = self.command.get_moisture(sensor)
                 if moisture_data is not None:
-                    self.measure_queue.put(moisture_data)
+                    #put sensor number as well as data on queue
+                    self.measure_queue.put((moisture_data, sensor))
             except Full:
                 logger.warning("Measurement queue is full. Data may be lost.")
         
         #call again after 100 ms
-        root.after(100, self.timer_thread, root)
+        root.after(100, self.timer_thread, root, sensor)
 
     @staticmethod
     def min_to_sec(interval):

@@ -98,3 +98,12 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform active {platform}
+bsp reload
+bsp config stdin "mdm_1"
+bsp config stdout "mdm_1"
+bsp write
+bsp reload
+catch {bsp regenerate}
+platform clean
+platform generate

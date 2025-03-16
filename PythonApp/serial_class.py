@@ -23,6 +23,7 @@ more control options for the system.
 
 '''
 import serial as ser
+from serial import SerialException
 import logging
 
 # Configure logging
@@ -75,7 +76,8 @@ class uart:
             logging.error("Invalid call: no UART object defined")
             raise NameError("UART not initialized")
 
-        uart_tx = bytes((cmd + data + '\r'), 'utf-8') if data else bytes((cmd + '\r'), 'utf-8')
+        uart_tx = bytes((cmd + chr(data) + '\r'), 'utf-8') \
+                if data else bytes((cmd + '\r'), 'utf-8')
         return self.uart.write(uart_tx)
 
     def receive(self, n_char):
@@ -94,7 +96,7 @@ class uart:
         
         try:
             data_char = self.uart.read(n_char)
-        except self.uart.SerialException as e:
+        except SerialException as e:
             logging.error(f'Read Error: {e}')
         finally:
             return data_char
@@ -132,7 +134,7 @@ class uart:
             logging.info(f'Successfully connected to {com}')
             return True
         except Exception as e:
-            logging.error(f'{e}: {com} is an invalid COM port. Check connections and try again.')
+            logging.error(f'{e}. {com} is an invalid COM port. Check connections and try again.')
             return False
     
     def disconnect(self):

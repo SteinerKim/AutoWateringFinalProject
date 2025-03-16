@@ -45,9 +45,13 @@ class uart_commands:
         data = self.uart.send_receive(3, 'T')
         logger.info(f"Received Temp/Humidity Data: {data}")
 
-        if not data or data[0] != 'A':
-            logger.warning(f"Improperly formatted data: {data}.")
+        if (not data):
             return None, None
+        if chr(data[0]) != 'A':
+            logger.warning(f'Improperly formatted data: {data}.')
+            return None, None
+        if chr(data[0]) == 'E':
+            logger.warning(f'Received error char from board....')
 
         temperature = data[2]
         humidity = data[1]
@@ -70,21 +74,36 @@ class uart_commands:
         else:
             logger.warning(f"Board UART uninitizalized. Enter COM port into GUI")
 
-    def raw_command(self):
+    def raw_command(self, cmd):
         """
         Send command based on raw input
 
-        @param entry_box: tkinter entry box object
-        @param cmd: command char  
+        @param cmd: command char
+
+        @return recieved bytes (if any)
         """
-        if cmd:
-            self.uart.send(cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
+        try:
+            assert cmd != None, "raw_command: No Valid Command!"
+        except AssertionError as e:
+            logger.error('No valid command input!')
+            return None
 
+        recv = self.uart.send_recv(cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
+        
+        if chr(recv[0]) == 'A':
+            logger.info(f'Successful transfer of {cmd}, received {recv}')
+        if chr(recv[0]) == 'E':
+            logger.warning(f'Bad data transfer of {cmd}, received {recv}')
+            return None
 
-    def get_moisture(self):
+        return recv
+            
+    def get_moisture(self, sensor):
         """
         @brief
         Sends a request for moisture data over UART.
+
+        @param sensor number for desired sensor measurement
 
         @return: Moisture percentage (None if communication fails)
         """
@@ -93,13 +112,23 @@ class uart_commands:
             return None
 
         data = self.uart.send_receive(3, 'N', data=sensor)
-        logger.info(f"Received Moisture Data: {data[1]} from sensor {sensor}")
+        logger.info(f"Received Moisture Data: {data} from sensor {sensor}")
+        
+        #override for testing purposes
+        return 40
 
-        if not data or data[0] != 'A':
-            logger.warning(f"Improperly formatted data: {data}.")
+        if not data:
+            logger.warning(f'No data received!')
             return None
+        if chr(data[0]) != 'A':
+            logger.warning(f'Improperly formatted data: {data}')
+            return None
+        if chr(data[0]) == 'E':
+            logger.warning(f'Error in board output! received: {data}')
 
-        return get_moisture_percent(float(data[1:2]))        
+        #turn bytes into python int object
+        read_adc = int.from_bytes(data[1:2], byteorder='big')
+        return self.get_moisture_percent(read_adc)        
     
     @staticmethod
     def get_moisture_percent(sensor_data):
@@ -119,4 +148,4 @@ class uart_commands:
         # Ensure the value stays within bounds
         sensor_data = max(min_adc, min(max_adc, sensor_data))
         
-        return (-100/(24500-15000))*sensor_data + 257.895 
+        return int((-100/(24500-15000))*sensor_data + 257.895 )
