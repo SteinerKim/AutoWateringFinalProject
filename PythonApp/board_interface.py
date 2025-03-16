@@ -54,11 +54,11 @@ class Interface:
         """
         try:
             return self.interval_queue.get(timeout=10)
-        except queue.Empty:
+        except Empty:
             logger.warning("Empty interval queue. Using default interval: 15 minutes.")
             return self.min_to_sec(15)
         except Exception as e:
-            logger.warning(f"Interval queue error: {e}")
+            logger.warning(f'Interval queue error: {e}')
             return self.min_to_sec(15)
 
     def handle_start_thread(self, root):

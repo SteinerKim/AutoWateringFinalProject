@@ -1,0 +1,33 @@
+Nothing to build in platform 'platform'
+
+10:11:05 **** Incremental Build of configuration Debug for project app ****
+make all 
+'Building file: ../src/watering.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/watering.o" -IC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bspinclude/include -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/watering.d" -MT"src/watering.o" -o "src/watering.o" "../src/watering.c"
+../src/watering.c: In function 'vReadTemperatureTask':
+../src/watering.c:357:18: warning: unused variable 'request' [-Wunused-variable]
+  357 |         uint16_t request;
+      |                  ^~~~~~~
+../src/watering.c:356:41: warning: unused variable 'checksum' [-Wunused-variable]
+  356 |         uint16_t humidity, temperature, checksum;
+      |                                         ^~~~~~~~
+../src/watering.c:355:17: warning: unused variable 'databytes' [-Wunused-variable]
+  355 |         uint8_t databytes[5]; // 5 bytes to store the data
+      |                 ^~~~~~~~~
+../src/watering.c:354:18: warning: unused variable 'data' [-Wunused-variable]
+  354 |         uint32_t data;
+      |                  ^~~~
+'Finished building: ../src/watering.c'
+' '
+'Building target: app.elf'
+'Invoking: MicroBlaze gcc linker'
+mb-gcc -Wl,-T -Wl,../src/lscript.ld -LC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bsplib/lib -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -Wl,--gc-sections -o "app.elf"  ./src/platform.o ./src/watering.o   -Wl,--start-group,-lxil,-lfreertos,-lgcc,-lc,--end-group
+'Finished building target: app.elf'
+' '
+'Invoking: MicroBlaze Print Size'
+mb-size app.elf  |tee "app.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+  38836	    488	  14188	  53512	   d108	app.elf
+'Finished building: app.elf.size'
+' '
