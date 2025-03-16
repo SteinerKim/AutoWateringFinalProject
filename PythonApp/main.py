@@ -30,12 +30,12 @@ def main():
     from unittest.mock import MagicMock, patch
     from board_interface import Interface
     
-    with patch('board_interface.uart') as MockSerial:
-        MockSerial.return_value.read.return_value = b'A42'
-        MockSerial.return_value.write.return_value = None
+    #with patch('board_interface.uart') as MockSerial:
+    #    MockSerial.return_value.read.return_value = b'A42'
+    #    MockSerial.return_value.write.return_value = None
         
-        # Instantiate the GUI
-        gui = GUI(data_interval=60)
+    # Instantiate the GUI
+    gui = GUI(data_interval=60)
 
 
 if __name__ == "__main__":

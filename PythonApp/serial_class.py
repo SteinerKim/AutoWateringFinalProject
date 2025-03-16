@@ -75,10 +75,10 @@ class uart:
             logging.error("Invalid call: no UART object defined")
             raise NameError("UART not initialized")
 
-        uart_tx = bytes((cmd + data), 'utf-8') if data else bytes(cmd, 'utf-8')
+        uart_tx = bytes((cmd + data + '\r'), 'utf-8') if data else bytes((cmd + '\r'), 'utf-8')
         return self.uart.write(uart_tx)
 
-    def receieve(self, n_char):
+    def receive(self, n_char):
         """
         @brief
 
@@ -125,13 +125,14 @@ class uart:
         
         @return Boolean: True for successful connection, False otherwise.
         """
+        logging.info(f'Attempting to connect to {com}....')
         try:
             self.uart = ser.Serial(com, baudrate=self.baud, timeout=self.timeout)
             self.port = com
             logging.info(f'Successfully connected to {com}')
             return True
-        except ser.SerialException:
-            logging.error(f'{com} is an invalid COM port. Check connections and try again.')
+        except Exception as e:
+            logging.error(f'{e}: {com} is an invalid COM port. Check connections and try again.')
             return False
     
     def disconnect(self):
@@ -156,6 +157,16 @@ class uart:
         logging.warning("UART connection is already closed or was never opened.")
         return False
 
+    def is_connected(self):
+        """
+        @brief
 
+        Determine if the uart has a good connection or not.
 
+        @returns boolean: state of connection.
+        """
+        if self.uart != None:
+            return self.uart.is_open
+        else:
+            return False
 

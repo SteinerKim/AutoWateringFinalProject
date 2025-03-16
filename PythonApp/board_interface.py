@@ -21,9 +21,11 @@ This class manages the threading and communication logic.
 
 import time
 import queue
+from queue import Empty, Full
 import threading
 import logging
 from serial_class import uart
+from uart_commands import uart_commands
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -39,6 +41,7 @@ class Interface:
         @param uart_obj: UART object for communication (if None, a new instance is created)
         """
         self.uart = uart_obj if uart_obj else uart()
+        self.command = uart_commands(self.uart)
         self.interval_queue = interval_queue
         self.measure_queue = meas_queue
         self.timer_task = None
@@ -58,80 +61,58 @@ class Interface:
             logger.warning(f"Interval queue error: {e}")
             return self.min_to_sec(15)
 
-    def handle_start_thread(self):
+    def handle_start_thread(self, root):
         """
         Starts the timer and interval-checking threads.
+        
+        @param root: GUI root object.
         """
         self.start_time = time.time()
 
         if self.timer_task is None:
             logger.info("Starting Timer Thread....")
-            self.timer_task = threading.Thread(target=self.timer_thread, daemon=True)
-            self.timer_task.start()
+            root.after(100, self.timer_thread, root)
 
         if self.interval_task is None:
             logger.info("Starting Interval Thread....")
-            self.interval_task = threading.Thread(target=self.interval_thread, daemon=True)
-            self.interval_task.start()
+            root.after(2000, self.interval_thread, root)
 
-    def interval_thread(self):
+    def interval_thread(self, root):
         """
         Periodically checks the interval queue for updates from the GUI.
+        
+        @param root: GUI root object.
         """
-        while True:
-            try:
-                new_interval = self.interval_queue.get(timeout=1)
-                self.interval = new_interval
-                logger.info(f"Interval updated: {self.interval} seconds")
-            except queue.Empty:
-                continue
-            except Exception as e:
-                logger.warning(f"Error in interval thread: {e}")
+        try:
+            new_interval = self.interval_queue.get(timeout=1)
+            self.interval = new_interval
+            logger.info(f"Interval updated: {self.interval} seconds")
+        except Empty:
+            logger.warning(f'Empty Interval Queue')
+        except Exception as e:
+            logger.warning(f'Error in interval thread: {e}')
+        
+        #call again after 2 seconds
+        root.after(2000, self.interval_thread, root)
 
-    def timer_thread(self):
+    def timer_thread(self, root):
         """
         Periodically requests data from the Microblaze at the defined interval.
+        
+        @param root: GUI root object.
         """
-        while True:
-            if time.time() - self.start_time >= self.interval:
-                self.start_time = time.time()
+        if time.time() - self.start_time >= self.interval:
+            self.start_time = time.time()
 
-                try:
-                    moisture_data = self.request_moisture()
-                    if moisture_data is not None:
-                        self.measure_queue.put(moisture_data)
-                except queue.Full:
-                    logger.warning("Measurement queue is full. Data may be lost.")
-
-    def toggle_water(self, water_state):
-        """
-        Toggles the watering state of the board.
-
-        @param water_state: Boolean indicating whether watering should be ON (True) or OFF (False).
-        """
-        logger.info(f"Toggling water state: {'ON' if water_state else 'OFF'}")
-        self.uart.send('W' if water_state else 'S')
-
-    def request_moisture(self):
-        """
-        Sends a request for moisture data over UART.
-
-        @note Read < 15000 ->100%; Read > 24500 ->0%
-
-        @return: Moisture percentage (None if communication fails)
-        """
-        if not self.uart.uart.is_open:
-            logger.error("UART connection is not open!")
-            return None
-
-        data = self.uart.send_receive(2, 'N')
-        logger.info(f"Received data: {data}")
-
-        if not data or data[0] != 'A':
-            logger.warning(f"Improperly formatted data: {data}.")
-            return None
-
-        return data[1]
+            try:
+                moisture_data = self.command.get_moisture()
+                if moisture_data is not None:
+                    self.measure_queue.put(moisture_data)
+            except Full:
+                logger.warning("Measurement queue is full. Data may be lost.")
+        
+        #call again after 100 ms
+        root.after(100, self.timer_thread, root)
 
     @staticmethod
     def min_to_sec(interval):

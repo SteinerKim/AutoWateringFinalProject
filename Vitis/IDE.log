@@ -1,0 +1,18 @@
+11:47:33 DEBUG : Logs will be stored at 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis/IDE.log'.
+11:47:36 INFO  : Launching XSCT server: xsct.bat -n  -interactive C:\Users\Cameron\Documents\ECE544\AutoWateringFinalProject\Vitis\temp_xsdb_launch_script.tcl
+11:47:36 ERROR : (XSDB Server)'\gnu\microblaze\lin\bin\' is not recognized as an internal or external command,
+operable program or batch file.
+
+11:47:36 ERROR : (XSDB Server)'\gnu\microblaze\nt\bin\' is not recognized as an internal or external command,
+operable program or batch file.
+
+11:47:36 ERROR : (XSDB Server)'\gnuwin\bin\' is not recognized as an internal or external command,
+operable program or batch file.
+
+11:47:40 INFO  : XSCT server has started successfully.
+11:47:40 INFO  : plnx-install-location is set to ''
+11:47:40 INFO  : Successfully done setting XSCT server connection channel  
+11:47:40 INFO  : Successfully done setting workspace for the tool. 
+11:47:45 INFO  : Registering command handlers for Vitis TCF services
+11:47:45 INFO  : Platform repository initialization has completed.
+11:47:48 INFO  : Successfully done query RDI_DATADIR 

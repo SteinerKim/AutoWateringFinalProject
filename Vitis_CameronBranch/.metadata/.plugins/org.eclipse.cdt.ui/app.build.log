@@ -1,0 +1,31 @@
+22:02:06 **** Incremental Build of configuration Debug for project app ****
+make all 
+'Building file: ../src/watering.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/watering.o" -IC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bspinclude/include -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/watering.d" -MT"src/watering.o" -o "src/watering.o" "../src/watering.c"
+../src/watering.c: In function 'vReadTemperatureTask':
+../src/watering.c:381:26: warning: unused variable 'high_pulse_duration' [-Wunused-variable]
+  381 |                 uint32_t high_pulse_duration;
+      |                          ^~~~~~~~~~~~~~~~~~~
+../src/watering.c:357:18: warning: unused variable 'request' [-Wunused-variable]
+  357 |         uint16_t request;
+      |                  ^~~~~~~
+../src/watering.c:356:41: warning: unused variable 'checksum' [-Wunused-variable]
+  356 |         uint16_t humidity, temperature, checksum;
+      |                                         ^~~~~~~~
+'Finished building: ../src/watering.c'
+' '
+'Building target: app.elf'
+'Invoking: MicroBlaze gcc linker'
+mb-gcc -Wl,-T -Wl,../src/lscript.ld -LC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bsplib/lib -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -Wl,--gc-sections -o "app.elf"  ./src/platform.o ./src/watering.o   -Wl,--start-group,-lxil,-lfreertos,-lgcc,-lc,--end-group
+'Finished building target: app.elf'
+' '
+'Invoking: MicroBlaze Print Size'
+mb-size app.elf  |tee "app.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+  49964	    492	  14192	  64648	   fc88	app.elf
+'Finished building: app.elf.size'
+' '
+
+22:02:06 Build Finished (took 592ms)
+

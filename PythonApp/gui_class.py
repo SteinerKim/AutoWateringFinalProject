@@ -52,7 +52,6 @@ class GUI:
         """
         self.root = tk.Tk()
         self.root.title("Microblaze Watering System")
-        self.root.geometry("600x600")
 
         # Initialize data
         if passed_points:
@@ -81,7 +80,11 @@ class GUI:
         self.start_gui()
 
         # Disconnect UART when done
-        self.board.uart.disconnect()
+        if self.board.uart.is_connected():
+            self.board.uart.disconnect()
+
+        #destroy root
+        self.root.destroy()
 
     def start_gui(self):
         """
@@ -91,68 +94,90 @@ class GUI:
         self.gui_layout()
         self.root.after(1000, self.plot_update_thread)
         self.root.mainloop()
-    
+ 
     def gui_layout(self):
         """
         @brief
         Defines the GUI layout and creates widgets.
         """
+        # Set initial window size
+        self.root.geometry("1000x500")
+
         # Configure the main layout with grid
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+        for i in range(9):
+            self.root.grid_rowconfigure(i, weight=1)
+        for i in range(4):
+            self.root.grid_columnconfigure(i, weight=1)
 
         # Create plot frame and add it to the left
         self.plot_frame = ttk.Frame(self.root)
-        self.plot_frame.grid(row=0, column=0, rowspan=5, sticky='nsew', padx=10, pady=10)
+        self.plot_frame.grid(row=0, column=0, rowspan=9, sticky='nsew', padx=10, pady=10)
 
+        # UART Connection label, input, and button
+        tk.Label(self.root, text="UART Connection:").grid(row=0, column=2, columnspan=2, padx=10, pady=0)
+        self.uart_input = tk.Entry(self.root)
+        self.uart_input.grid(row=1, column=2, padx=10, pady=5)
+        self.uart_button = tk.Button(self.root, text="Connect", \
+                command=(lambda: self.board.uart.connect(self.uart_input.get())))
+        self.uart_button.grid(row=1, column=3, padx=10, pady=5)
+
+        # Command input and button
+        self.cmd_input = tk.Entry(self.root)
+        self.cmd_input.grid(row=2, column=2, padx=10, pady=2)
+
+        self.cmd_button = tk.Button(self.root, text="Send Cmd", command=self.handle_send_cmd)
+        self.cmd_button.grid(row=2, column=3, padx=10, pady=2)
+
+        # Water override button 1
+        self.override_button = tk.Button(self.root, text="Force Toggle 1", \
+                command=(lambda: self.handle_override(1)))
+        self.override_button.grid(row=3, column=3, padx=10, pady=2)
+
+        # Water override button 2
+        self.override_button = tk.Button(self.root, text="Force Toggle 2", \
+                command=(lambda: self.handle_override(2)))
+        self.override_button.grid(row=4, column=3, padx=10, pady=2)
+
+        # Start button
+        self.start_button = tk.Button(self.root, text="Start", bg="green", \
+            command=lambda: self.board.handle_start_thread(self.root))
+        self.start_button.grid(row=7, column=3, padx=10, pady=2)
+
+        # Interval input
+        tk.Label(self.root, text="Measurement Interval (min):").grid(row=4, column=2, padx=10, pady=2)
+
+        self.time_interval = tk.Entry(self.root)
+        self.time_interval.grid(row=5, column=3, padx=10, pady=2)
+
+        self.interval_check = tk.Button(self.root, text="Update", command=self.handle_interval)
+        self.interval_check.grid(row=6, column=3, padx=10, pady=2)
+
+        # Threshold slider
+        self.threshold_slider = tk.Scale(self.root, from_=100, to=0, orient="vertical")
+        self.threshold_slider.set(self.threshold)
+        self.threshold_slider.grid(row=1, column=1, rowspan=7, sticky='ns', padx=10, pady=2)
+
+        # Temperature display
+        tk.Label(self.root, text="Temperature (C):").grid(row=7, column=2, padx=10, pady=2, sticky='e')
+        self.temp_display = tk.Entry(self.root, state='normal', width=10)
+        self.temp_display.grid(row=8, column=3, padx=10, pady=2, sticky='w')
+        self.temp_display.insert(0, "--")
+        self.temp_display.config(state='readonly')
+
+        # Humidity display
+        tk.Label(self.root, text="Humidity (%):").grid(row=8, column=2, padx=10, pady=2, sticky='e')
+        self.humidity_display = tk.Entry(self.root, state='normal', width=10)
+        self.humidity_display.grid(row=9, column=3, padx=10, pady=2, sticky='w')
+        self.humidity_display.insert(0, "--")
+        self.humidity_display.config(state='readonly')   
+        
         # Create plot
         fig = self.plot_window()
         self.canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
-
-        # Command input and button
-        self.cmd_input = tk.Entry(self.root)
-        self.cmd_input.grid(row=0, column=2, padx=10, pady=10)
-
-        self.cmd_button = tk.Button(self.root, text="Send Cmd", command=self.handle_send_cmd)
-        self.cmd_button.grid(row=0, column=3, padx=10, pady=10)
-
-        # Water override button
-        self.override_button = tk.Button(self.root, text="Force Toggle", command=self.handle_override)
-        self.override_button.grid(row=1, column=3, padx=10, pady=10)
-
-        # Start button
-        self.start_button = tk.Button(self.root, text="Start", bg="green", command=self.board.handle_start_thread)
-        self.start_button.grid(row=4, column=3, padx=10, pady=10)
-
-        # Interval input
-        tk.Label(self.root, text="Measurement Interval (min):").grid(row=2, column=2, padx=10, pady=10)
-
-        self.time_interval = tk.Entry(self.root)
-        self.time_interval.grid(row=2, column=3, padx=10, pady=10)
-
-        self.interval_check = tk.Button(self.root, text="Update", command=self.handle_interval)
-        self.interval_check.grid(row=3, column=3, padx=10, pady=10)
-
-        # Threshold slider
-        self.threshold_slider = tk.Scale(self.root, from_=0, to=100, orient="vertical", label="Threshold")
-        self.threshold_slider.set(self.threshold)
-        self.threshold_slider.grid(row=0, column=1, padx=10, pady=10)
-
-        # Temperature display
-        tk.Label(self.root, text="Temperature (C):").grid(row=5, column=2, padx=10, pady=10, sticky='e')
-        self.temp_display = tk.Entry(self.root, state='normal', width=10)
-        self.temp_display.grid(row=5, column=3, padx=10, pady=10, sticky='w')
-        self.temp_display.insert(0, "--")
-        self.temp_display.config(state='readonly')
-
-        # Humidity display
-        tk.Label(self.root, text="Humidity (%):").grid(row=6, column=2, padx=10, pady=10, sticky='e')
-        self.humidity_display = tk.Entry(self.root, state='normal', width=10)
-        self.humidity_display.grid(row=6, column=3, padx=10, pady=10, sticky='w')
-        self.humidity_display.insert(0, "--")
-        self.humidity_display.config(state='readonly')
 
     def plot_window(self):
         """
@@ -168,13 +193,42 @@ class GUI:
         water_values = self.data[:, 1]
 
         ax.plot(t_values, water_values, "wo", markersize=4, label="Data Points")
-        ax.axhline(y=self.threshold, color="w", linestyle="--", label="Threshold")
+        ax.axhline(y=self.threshold_slider.get(), color="w", linestyle="--", label="Threshold")
         ax.set_facecolor("black")
         ax.set_xlabel("Time [Minutes]", color="white")
         ax.set_ylabel("Moisture Percentage", color="white")
         ax.legend()
 
+        #determine max plot xdim
+        x_ticks = self.determine_xdim(t_values)
+
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
+        ax.spines['bottom'].set_color('white')
+        ax.spines['top'].set_color('white') 
+        ax.spines['right'].set_color('white')
+        ax.spines['left'].set_color('white')
+
+        #create plot dimensions
+        if (x_ticks[-1] < 60):
+            ax.set_xticks([10*i for i in range(7)])
+            ax.set_xlim(-2,60)
+        else:
+            ax.set_xticks(x_ticks)
+            ax.set_xlim(-2,x_ticks[-1])
+        ax.set_ylim(-2,110)
+        ax.set_yticks([0, 25, 50, 75, 100], 
+                   ['0%', '25%', '50%', '75%', '100%'])
+
         return fig
+
+
+    def handle_start(self):
+        """
+        @brief
+        Handles start button press. Passes to board interface handle function.
+        """
+        self.board.handle_start_thread(self.root)
 
     def handle_send_cmd(self):
         """
@@ -182,17 +236,18 @@ class GUI:
         Handles command button presses and sends data over UART.
         """
         cmd = self.cmd_input.get()
-        if cmd:
-            self.board.uart.send(cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
+        self.board.command.raw_command(cmd)
 
-    def handle_override(self):
+    def handle_override(self, sensor):
         """
         @brief
         Toggles the watering system manually.
+
+        @param sensor: sensor number, either 1 or 2
         """
         self.water_override = not self.water_override
         self.watering_state = self.water_override
-        self.board.toggle_water(self.watering_state)
+        self.board.command.toggle_water(self.watering_state, sensor)
 
     def handle_interval(self):
         """
@@ -215,10 +270,28 @@ class GUI:
             time_elapsed = t.time() - self.start_time
             self.data = np.vstack((self.data, [time_elapsed, data]))
 
-            fig = self.plot_window()
-            self.canvas.figure = fig
-            self.canvas.draw()
+        plt.close()
+        fig = self.plot_window()
+        self.canvas.figure = fig
+        self.canvas.draw()
 
+        # Adding temperature and humidity check
+        self.temp_data, self.humid_data = self.board.command.get_temperature()
+        if self.temp_data != None and self.humid_data != None:
+            self.humidity_display.insert(0, self.humid_data)
+            self.temp_display.insert(0, self.temp_data)
+
+        #check sensor threshold
+        self.sensor_threshold_toggle(1)
+        self.sensor_threshold_toggle(2)
+        
+        #Perform task again....
+        self.root.after(1000, self.plot_update_thread)
+    
+    def sensor_threshold_toggle(self, sensor):
+        """
+        @brief return true of false for the watering state
+        """
         # Check if moisture exceeds threshold
         last_water_state = self.watering_state
         if self.data[-1, 1] >= self.threshold and not self.water_override:
@@ -228,7 +301,31 @@ class GUI:
 
         #write if different
         if self.watering_state != last_water_state:
-            self.board.toggle_water(self.watering_state)
+            self.board.command.toggle_water(self.watering_state, sensor)
+
+    @staticmethod
+    def determine_xdim(t):
+        '''
+        @brief
+
+        Use this function to create a list of tick values
+        for plotting function. Goes from 0 to the largest
+        multiple of 10 in the x_ticks.
         
-        #Perform task again....
-        self.root.after(1000, self.plot_update_thread)
+        @param t numpy array of time values
+
+        @return list of x_ticks
+
+        '''
+        #get multiple number
+        ten_mult = int(t[-1]//10)
+        remainder = int(t[-1]%10)
+        
+        x_ticks = [10*i for i in range(ten_mult+1)]
+
+        #check whether remainder is > 0
+        if(remainder > 0):
+            x_ticks.append(x_ticks[-1]+10)
+
+        return x_ticks
+
