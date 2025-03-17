@@ -11,18 +11,19 @@ The Artix Garden will contain two plants.
 The application Demonstrates usage of Queues, Semaphores, Tasking model.  The application
 will toggle an LED to represent the watering of a plant.
 
-Application - Toggle LEDs on each button interrupt. Could modify to include switches
+Application - Read UART for commands.  Execute commands.  Commands are:
+'W<plant>' - Water plant
+'S<plant>' - Stop watering plant
+'T' - request temperature/humidity
+'N<plant>' - request moisture level of the plant.  Returns 'A' and two bytes of sensor
+data.
 
-Flow diagram
-GPIO Interrupt (BTN) --> ( ISR )Send a Semaphore --> Task 1 (Catch the Semaphore) -->
--->Task 1 - Send a Queue to Task -2 --> Task 2 Receive the queue --> Write to GPIO (LED)
+Upon receiving a 'W' command, that plant will be "watered" by turning on an LED.
+Upon receiving a 'S' command, that plant will stop being watered by turning off an LED.
 
 Assumptions:
 o Nexys4IO is connected to LEDs. (Could also use another GPIO instance
- o GPIO_1 is capable of generating an interrupt and is connect to the switches and buttons
-(see project #2 write-up for details)
-o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
- the FreeRTOS sys tick.
+ o GPIO, channel 2 is used for temperature sensor)
 */
 
 /* Kernel includes. */
@@ -46,7 +47,7 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 #include "sleep.h"
 
 /*Definitions for NEXYS4IO Peripheral*/
-#define N4IO_DEVICE_ID            XPAR_NEXYS4IO_0_DEVICE_ID
+#define N4IO_DEVICE_ID           XPAR_NEXYS4IO_0_DEVICE_ID
 #define N4IO_BASEADDR            XPAR_NEXYS4IO_0_S00_AXI_BASEADDR
 #define N4IO_HIGHADDR            XPAR_NEXYS4IO_0_S00_AXI_HIGHADDR
 
@@ -63,8 +64,11 @@ o AXI Timer 0 is a dual 32-bit timer with the Timer 0 interrupt used to generate
 // maximum uart buffer size
 #define BUFFER_SIZE        (128)
 #define DHT22_TIMEOUT      (1000)
+#define RX_ID              (0)
+#define TEMP_ID            (1)
+#define ERR_ID             (2)
 
-//Create Instances
+// Create Instances
 XUartLite UartLite;
 XUartLite_Config *Config;
 XSysMon SysMonInst;  // Create an instance of the SysMon driver
@@ -109,7 +113,7 @@ int main(void)
     //Initialize the HW
     prvSetupHardware();
 
-    //Create Semaphore for ISR
+    // Create Semaphore for ISR
     vSemaphoreCreateBinary(binary_sem);
 
     // create semaphore for temp sensor
@@ -122,7 +126,7 @@ int main(void)
     /* Sanity check that the queue was created. */
     configASSERT( xQueue );
 
-    //Create Parse input task
+    // Create Parse input task
     xReturn = xTaskCreate( vParseInputTask,
                 ( const char * ) "Parse",
                 configMINIMAL_STACK_SIZE,
@@ -131,7 +135,7 @@ int main(void)
                 NULL );
     configASSERT(xReturn == pdPASS);
 
-    //Create receive UART data task
+    // Create receive UART data task
     xReturn = xTaskCreate( que_rx,
                 "RX",
                 configMINIMAL_STACK_SIZE,
@@ -163,7 +167,7 @@ int main(void)
     uint16_t sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
     xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
 
-    //Start the Scheduler
+    // Start the Scheduler
     xil_printf("Starting the scheduler\r\n");
     vTaskStartScheduler();
 
@@ -223,7 +227,7 @@ static void ParseData(uint8_t *buffer, int length) {
     // Implement your parsing logic based on your protocol
     uint16_t sensor_value = 0;
     DispMessage msg;
-    msg.taskID = 0;
+    msg.taskID = RX_ID;
 
     for (int i = 0; i < length; i++) {
         if ((buffer[i] == 's') || (buffer[i] == 'S')) {          // handle stop watering
@@ -233,10 +237,10 @@ static void ParseData(uint8_t *buffer, int length) {
             } else if (i < length && buffer[i] == '2'){          // stop watering plant 2
                 NX4IO_setLEDs(NX4IO_getLEDS_DATA() ^ 0x2);
             } else {
-                buffer[i+1] = '\0';
-                msg.taskID = 2;
-				msg.data = 0;
-				xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
+                buffer[i+1] = '\0';  // invalid command
+                msg.taskID = ERR_ID;
+                msg.data = 0;
+                xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("invalid protocol %s\r\n", buffer);
             }
         } else if ((buffer[i] == 'w') || (buffer[i] == 'W')) {   // handle watering
@@ -246,29 +250,29 @@ static void ParseData(uint8_t *buffer, int length) {
             } else if (i < length && buffer[i] == '2'){          // start watering plant 2
                 NX4IO_setLEDs(NX4IO_getLEDS_DATA() | 0x2);
             } else {
-                buffer[i+1] = '\0';
-                msg.taskID = 2;
-				msg.data = 0;
-				xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
+                buffer[i+1] = '\0';  // invalid command
+                msg.taskID = ERR_ID;
+                msg.data = 0;
+                xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("invalid protocol %s\r\n", buffer);
             }
         } else if ((buffer[i] == 'n') || (buffer[i] == 'N')) {   // handle sensor reading
             i++;
             if (i < length && buffer[i] == '1') {                // read sensor 1 reading
                 sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+3);  // Channel 3 corresponds to A13/ADP3
-                msg.taskID = 0;
+                msg.taskID = RX_ID;
                 msg.data = sensor_value;
                 xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("Raw Data (Channel 3): %d\r\n", sensor_value);
             } else if (i < length && buffer[i] == '2') {         // read sensor 2 reading
                 sensor_value = XSysMon_GetAdcData(&SysMonInst, XSM_CH_AUX_MIN+10);  // Channel 10 corresponds to A13/ADP3
-                msg.taskID = 0;
+                msg.taskID = RX_ID;
                 msg.data = sensor_value;
                 xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("Raw Data (Channel 10): %d\r\n", sensor_value);
             } else {
                 buffer[i+1] = '\0';
-                msg.taskID = 2;
+                msg.taskID = ERR_ID;
                 msg.data = 0;
                 xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
                 xil_printf("invalid protocol %s\r\n", buffer);
@@ -276,10 +280,10 @@ static void ParseData(uint8_t *buffer, int length) {
         } else if ((buffer[i] == 't') || (buffer[i] == 'T')) {    // temp sensor read
             xSemaphoreGive( temp_sem );
         } else {
-            buffer[i+1] = '\0';
-            msg.taskID = 2;
-			msg.data = 0;
-			xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
+            buffer[i+1] = '\0';  // invalid command
+            msg.taskID = ERR_ID;
+            msg.data = 0;
+            xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
             xil_printf("invalid protocol %s\r\n", buffer);
         }
     }
@@ -294,7 +298,7 @@ void vParseInputTask( void *pvParams)
     uint8_t buffer[BUFFER_SIZE];
     uint16_t index = 0;
     DispMessage msg;
-    msg.taskID = 0;
+    msg.taskID = RX_ID;
 
     while(1) {
         if(xSemaphoreTake(binary_sem,500)){
@@ -326,9 +330,9 @@ void que_rx (void *p)
     DispMessage msg;
     while(1){
         xQueueReceive( xQueue, &msg, portMAX_DELAY );
-        if (msg.taskID == 0)
+        if (msg.taskID == RX_ID)
             xil_printf("Queue Received: %c\r\n",msg.data);
-        else if (msg.taskID == 1)
+        else if (msg.taskID == TEMP_ID)
             xil_printf("Temp Received: %d Humidity=%d\r\n", (msg.data&0xFF00)>>8, msg.data&0xFF);
     }
     vTaskDelete(NULL);
@@ -345,14 +349,14 @@ void que_tx (void *p)
         xQueueReceive( xTxQueue, &msg, portMAX_DELAY );
         // copilot mentioned the disable/enable interrupt
         XUartLite_DisableInterrupt(&UartLite);
-        if (msg.taskID != 2) { // valid data
-        	ACK = 'A';
-        	SendData(&ACK);    // send acknowledgement then the data
-        	send_uint16_as_bytes(&UartLite, msg.data);
+        if (msg.taskID != ERR_ID) { // valid data
+            ACK = 'A';
+            SendData(&ACK);    // send acknowledgement then the data
+            send_uint16_as_bytes(&UartLite, msg.data);
         }
         else {
-        	ACK = 'E';
-        	SendData(&ACK);    // send error acknowledgement then the data
+            ACK = 'E';
+            SendData(&ACK);    // send error acknowledgement then the data
         }
 
         XUartLite_EnableInterrupt(&UartLite);
@@ -407,12 +411,12 @@ void vReadTemperatureTask(void *pvParameters)
     uint8_t checksum;     // checksum stored
     uint32_t xStatus = XST_SUCCESS;
     DispMessage msg;
-    msg.taskID = 1;       // this task is task 1
+    msg.taskID = TEMP_ID;       // this task is task 1
 
     for (;;)
     {
         // Set GPIO as output
-    /*    XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
+        /*XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
 
         // Send start signal
         XGpio_DiscreteWrite(&Gpio, GPIO_CHANNEL, 0);
@@ -457,13 +461,14 @@ void vReadTemperatureTask(void *pvParameters)
             xil_printf("checksum error in temp sensor\r\n");
             continue;
         }
-                */
-    	humidity = 73;
-    	temperature = 43;
+*/
+        humidity = 66;
+        temperature = 17;
 
         if (xSemaphoreTake(temp_sem,0)) {
-            msg.data = temperature<<8 | humidity;
-            msg.taskID = 1;
+            // send data to TX queue and RX queue
+            msg.data = (temperature<<8) | humidity;
+            msg.taskID = TEMP_ID;
             xQueueSend( xTxQueue, &msg, mainDONT_BLOCK );
             xQueueSend( xQueue, &msg, mainDONT_BLOCK );
         }
