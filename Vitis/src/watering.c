@@ -344,6 +344,7 @@ void que_tx (void *p)
 {
     DispMessage msg;
     char ACK = 'A';
+    char terminator = 'Q';
 
     while(1) {
         xQueueReceive( xTxQueue, &msg, portMAX_DELAY );
@@ -358,6 +359,8 @@ void que_tx (void *p)
             ACK = 'E';
             SendData(&ACK);    // send error acknowledgement then the data
         }
+        //Send terminator character
+        SendData(&terminator);
 
         XUartLite_EnableInterrupt(&UartLite);
     }
