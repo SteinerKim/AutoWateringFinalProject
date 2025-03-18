@@ -281,7 +281,7 @@ class GUI:
         self.canvas.draw()
 
         # Adding temperature and humidity check
-        temp_data, humid_data = self.board.command.get_temperature()
+        humid_data, temp_data = self.board.command.get_temperature()
         if temp_data != None and humid_data != None:
             self.update_textbox(self.humidity_display, humid_data)
             self.update_textbox(self.temp_display, temp_data)

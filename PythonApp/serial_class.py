@@ -75,8 +75,12 @@ class uart:
         if self.uart is None:
             logging.error("Invalid call: no UART object defined")
             raise NameError("UART not initialized")
+            return None
 
-        uart_tx = bytes((cmd + chr(data) + '\r'), 'utf-8') \
+        if type(data) != str and data != None:
+            data = chr(data)
+
+        uart_tx = bytes((cmd + data + '\r'), 'utf-8') \
                 if data else bytes((cmd + '\r'), 'utf-8')
         return self.uart.write(uart_tx)
 

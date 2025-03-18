@@ -88,7 +88,7 @@ class uart_commands:
             logger.error('No valid command input!')
             return None
 
-        recv = self.uart.send_recv(cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
+        recv = self.uart.send_receive(5, cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
         
         if chr(recv[0]) == 'A':
             logger.info(f'Successful transfer of {cmd}, received {recv}')
