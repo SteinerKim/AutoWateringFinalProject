@@ -1056,3 +1056,114 @@ con
 ----------------End of Script----------------
 
 10:46:24 INFO  : Launch script is exported to file 'C:\Users\Cameron\Documents\ECE544\AutoWateringFinalProject\Vitis_CameronBranch\app_system\_ide\scripts\debugger_app-default.tcl'
+20:10:48 INFO  : Disconnected from the channel tcfchan#3.
+20:10:49 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+20:10:49 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292B0F00CA' is selected.
+20:10:49 INFO  : 'jtag frequency' command is executed.
+20:10:49 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}' command is executed.
+20:10:51 INFO  : Device configured successfully with "C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit"
+20:10:51 INFO  : Context for processor 'microblaze_0' is selected.
+20:10:51 INFO  : Hardware design and registers information is loaded from 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa'.
+20:10:51 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+20:10:51 INFO  : Context for processor 'microblaze_0' is selected.
+20:10:51 INFO  : System reset is completed.
+20:10:54 INFO  : 'after 3000' command is executed.
+20:10:54 INFO  : Context for processor 'microblaze_0' is selected.
+20:10:55 INFO  : The application 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf' is downloaded to processor 'microblaze_0'.
+20:10:55 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}
+fpga -file C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf
+----------------End of Script----------------
+
+20:10:55 INFO  : Context for processor 'microblaze_0' is selected.
+20:10:55 INFO  : 'con' command is executed.
+20:10:55 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+20:10:55 INFO  : Launch script is exported to file 'C:\Users\Cameron\Documents\ECE544\AutoWateringFinalProject\Vitis_CameronBranch\app_system\_ide\scripts\debugger_app-default.tcl'
+21:51:50 INFO  : Disconnected from the channel tcfchan#4.
+21:51:52 INFO  : Checking for BSP changes to sync application flags for project 'app'...
+21:52:03 INFO  : Checking for BSP changes to sync application flags for project 'app'...
+21:52:07 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+21:52:08 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292B0F00CA' is selected.
+21:52:08 INFO  : 'jtag frequency' command is executed.
+21:52:08 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}' command is executed.
+21:52:11 INFO  : Device configured successfully with "C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit"
+21:52:11 INFO  : Context for processor 'microblaze_0' is selected.
+21:52:11 INFO  : Hardware design and registers information is loaded from 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa'.
+21:52:11 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+21:52:11 INFO  : Context for processor 'microblaze_0' is selected.
+21:52:11 INFO  : System reset is completed.
+21:52:14 INFO  : 'after 3000' command is executed.
+21:52:14 INFO  : Context for processor 'microblaze_0' is selected.
+21:52:14 INFO  : The application 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf' is downloaded to processor 'microblaze_0'.
+21:52:14 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}
+fpga -file C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf
+----------------End of Script----------------
+
+21:52:14 INFO  : Context for processor 'microblaze_0' is selected.
+21:52:14 INFO  : 'con' command is executed.
+21:52:14 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+21:52:14 INFO  : Launch script is exported to file 'C:\Users\Cameron\Documents\ECE544\AutoWateringFinalProject\Vitis_CameronBranch\app_system\_ide\scripts\debugger_app-default.tcl'
+21:58:30 INFO  : Disconnected from the channel tcfchan#5.
+21:58:36 INFO  : Checking for BSP changes to sync application flags for project 'app'...
+21:58:43 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+21:58:44 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292B0F00CA' is selected.
+21:58:45 INFO  : 'jtag frequency' command is executed.
+21:58:45 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}' command is executed.
+21:58:47 INFO  : Device configured successfully with "C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit"
+21:58:47 INFO  : Context for processor 'microblaze_0' is selected.
+21:58:47 INFO  : Hardware design and registers information is loaded from 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa'.
+21:58:47 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+21:58:47 INFO  : Context for processor 'microblaze_0' is selected.
+21:58:47 INFO  : System reset is completed.
+21:58:50 INFO  : 'after 3000' command is executed.
+21:58:50 INFO  : Context for processor 'microblaze_0' is selected.
+21:58:50 INFO  : The application 'C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf' is downloaded to processor 'microblaze_0'.
+21:58:50 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}
+fpga -file C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf
+----------------End of Script----------------
+
+21:58:50 INFO  : Context for processor 'microblaze_0' is selected.
+21:58:50 INFO  : 'con' command is executed.
+21:58:50 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+21:58:50 INFO  : Launch script is exported to file 'C:\Users\Cameron\Documents\ECE544\AutoWateringFinalProject\Vitis_CameronBranch\app_system\_ide\scripts\debugger_app-default.tcl'

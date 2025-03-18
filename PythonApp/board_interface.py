@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class Interface:
-    def __init__(self, interval_queue, meas_queue, uart_obj=None):
+    def __init__(self, interval_queue, meas_queue, temp_queue, uart_obj=None):
         """
         Initializes the Interface class.
 
@@ -44,6 +44,7 @@ class Interface:
         self.command = uart_commands(self.uart)
         self.interval_queue = interval_queue
         self.measure_queue = meas_queue
+        self.temp_queue = temp_queue
         self.timer_task = None
         self.interval_task = None
         self.interval = self.get_initial_interval()
@@ -64,19 +65,23 @@ class Interface:
     def handle_start_thread(self, root):
         """
         Starts the timer and interval-checking threads.
-        
+
         @param root: GUI root object.
         """
         self.start_time = time.time()
 
-        if self.timer_task is None:
-            logger.info("Starting Timer Thread....")
-            root.after(100, self.timer_thread, root, 1)
-            root.after(150, self.timer_thread, root, 2)
+        #start timer thread
+        logger.info("Starting Timer Thread....")
+        root.after(100, self.timer_thread, root, 1)
+        root.after(150, self.timer_thread, root, 2)
 
-        if self.interval_task is None:
-            logger.info("Starting Interval Thread....")
-            root.after(2000, self.interval_thread, root)
+        #start interval thread
+        logger.info("Starting Interval Thread....")
+        root.after(2000, self.interval_thread, root)
+
+        #start temperature thread
+        logger.info("Starting Temperature Thread....")
+        root.after(2500, self.temp_thread, root)
 
     def interval_thread(self, root):
         """
@@ -96,6 +101,22 @@ class Interface:
         #call again after 2 seconds
         root.after(2000, self.interval_thread, root)
 
+    def temp_thread(self, root):
+        """
+        Periodically get temperature (every 5 minutes)
+
+        @param root: tkinter root for root.after function.
+        """
+        humid_data, temp_data = self.command.get_temperature()
+        if humid_data and temp_data:
+            try:
+                self.temp_queue.put((temp_data, humid_data))
+            except Full:
+                logger.warning(f'Put element on full temperature queue!')
+
+        #call again after 5 minutes
+        root.after(self.min_to_ms(5), self.temp_thread, root)
+
     def timer_thread(self, root, sensor):
         """
         Periodically requests data from the Microblaze at the defined interval.
@@ -112,7 +133,7 @@ class Interface:
                     #put sensor number as well as data on queue
                     self.measure_queue.put((moisture_data, sensor))
             except Full:
-                logger.warning("Measurement queue is full. Data may be lost.")
+                logger.warning("Put element on full measure queue!")
         
         #call again after 100 ms
         root.after(100, self.timer_thread, root, sensor)
@@ -126,3 +147,13 @@ class Interface:
         @return: Time in seconds
         """
         return interval * 60
+
+    @staticmethod
+    def min_to_ms(interval):
+        """
+        Convert minutes to ms
+
+        @param interval: Time in minutes
+        @return: Time in milliseconds
+        """
+        return interval*60*1000

@@ -66,7 +66,7 @@ class uart_commands:
         @param sensor: sensor number; either 1 or 2.
         """
         logger.info(f"Toggling water state: {'ON' if water_state else 'OFF'}")
-        if sensor == 1 or sensor == 2:
+        if not(sensor == 1 or sensor == 2):
             logger.warning(f"Invalid Sensor Number: {sensor}")
         if self.uart.is_connected():
             buf = ('W' if water_state else 'S') + f'{sensor}'
@@ -111,12 +111,9 @@ class uart_commands:
             logger.error("UART connection is not open!")
             return None
 
-        data = self.uart.send_receive(3, 'N', data=sensor)
+        data = self.uart.send_receive(3, 'N', data=f'{sensor}')
         logger.info(f"Received Moisture Data: {data} from sensor {sensor}")
         
-        #override for testing purposes
-        return 40
-
         if not data:
             logger.warning(f'No data received!')
             return None

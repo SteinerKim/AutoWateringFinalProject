@@ -25,6 +25,7 @@ more control options for the system.
 import serial as ser
 from serial import SerialException
 import logging
+from time import sleep
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,7 +39,7 @@ class uart:
     write functionality for the GUI.
     """
 
-    def __init__(self, baud=115200, timeout=0.5):
+    def __init__(self, baud=115200, timeout=5, terminator=None):
         """
         @brief
 
@@ -46,6 +47,7 @@ class uart:
 
         @param baud: Baud rate for the microcontroller (default 115200)
         @param timeout: Timeout between transmissions (default 0.5s)
+        @param terminator: termination character, default none
 
         @note Do not create an instance of the Serial object in the init
         function, as the COM port is not initialized in the GUI.
@@ -54,6 +56,8 @@ class uart:
         self.timeout = timeout
         self.uart = None
         self.port = None
+
+        self.terminator = terminator if terminator else 'Q'
 
         # Command dictionary for system control
         self.cmd_dict = {
@@ -99,11 +103,17 @@ class uart:
             raise NameError("UART not initialized")
         
         try:
-            data_char = self.uart.read(n_char)
+            data_char = \
+                self.uart.read_until(self.terminator)
         except SerialException as e:
             logging.error(f'Read Error: {e}')
-        finally:
-            return data_char
+       
+        if data_char:
+            #remove extra char from data
+            term_char = self.terminator.encode('utf-8')
+            data_char = data_char.replace(term_char, b"")
+        
+        return data_char if data_char else None
 
     def send_receive(self, n_char, cmd, data=None):
         """

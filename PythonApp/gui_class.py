@@ -56,11 +56,13 @@ class GUI:
         # Initialize data
         if passed_points:
             logging.warning("Passed point functionality is not currently supported. Starting blank data.")
-            self.data = np.zeros((2, 1, 2))
+            self.data_s1 = np.zeros((1, 2))
+            self.data_s2 = np.zeros((1, 2))
         else:
-            self.data = np.zeros((2, 1, 2))
+            self.data_s1 = np.zeros((1, 2))
+            self.data_s2 = np.zeros((1, 2))
 
-        logging.info(f'data matrix shape: {self.data.shape}')
+        logging.info(f'data matrix shape: {self.data_s1.shape}')
 
         # GUI variables
         self.threshold = 50  # Default threshold at 50%
@@ -71,9 +73,10 @@ class GUI:
         # Queues for inter-thread communication
         self.interval_queue = Queue()
         self.meas_queue = Queue()
+        self.temp_queue = Queue()
 
         # Create board interface
-        self.board = Interface(self.interval_queue, self.meas_queue)
+        self.board = Interface(self.interval_queue, self.meas_queue, self.temp_queue)
 
         # Start time tracking
         self.start_time = t.time()
@@ -103,7 +106,7 @@ class GUI:
         Defines the GUI layout and creates widgets.
         """
         # Set initial window size
-        self.root.geometry("1000x500")
+        self.root.geometry("1000x550")
 
         # Configure the main layout with grid
         self.root.grid_rowconfigure(0, weight=1)
@@ -191,11 +194,14 @@ class GUI:
         fig, ax = plt.subplots(facecolor="black")
 
         # Extract data
-        t_values = self.data[:, :, 0]
-        water_values = self.data[:, :, 1]
+        t_values_s1 = self.data_s1[:, 0]
+        water_values_s1 = self.data_s1[:, 1]
 
-        ax.plot(t_values[0], water_values[0], "wo", markersize=4, label="Sensor 1")
-        ax.plot(t_values[1], water_values[1], "ro", markersize=4, label="Sensor 2")
+        t_values_s2 = self.data_s2[:, 0]
+        water_values_s2 = self.data_s2[:, 1]
+
+        ax.plot(t_values_s1, water_values_s1, "wo", markersize=4, label="Sensor 1")
+        ax.plot(t_values_s2, water_values_s2, "ro", markersize=4, label="Sensor 2")
         ax.axhline(y=self.threshold_slider.get(), color="w", linestyle="--", label="Threshold")
         ax.set_facecolor("black")
         ax.set_xlabel("Time [Minutes]", color="white")
@@ -203,7 +209,7 @@ class GUI:
         ax.legend()
 
         #determine max plot xdim
-        x_ticks = self.determine_xdim(t_values)
+        x_ticks = self.determine_xdim(t_values_s1)
 
         ax.tick_params(axis='x', colors='white')
         ax.tick_params(axis='y', colors='white')
@@ -269,11 +275,14 @@ class GUI:
         Updates the plot periodically with new data from the measurement queue.
         """
         if not self.meas_queue.empty():
-            breakpoint()
             data, sensor = self.meas_queue.get()
             time_elapsed = (t.time() - self.start_time)/60
-            self.data[sensor-1] = \
-                    np.vstack((self.data[sensor-1], [time_elapsed, data]))
+            if sensor == 1:
+                self.data_s1 = \
+                    np.vstack((self.data_s1, [time_elapsed, data]))
+            if sensor == 2:
+                self.data_s2 = \
+                    np.vstack((self.data_s2, [time_elapsed, data]))
 
         plt.close()
         fig = self.plot_window()
@@ -281,10 +290,11 @@ class GUI:
         self.canvas.draw()
 
         # Adding temperature and humidity check
-        humid_data, temp_data = self.board.command.get_temperature()
-        if temp_data != None and humid_data != None:
-            self.update_textbox(self.humidity_display, humid_data)
-            self.update_textbox(self.temp_display, temp_data)
+        if not self.temp_queue.empty():
+            temp_data, humid_data = self.temp_queue.get()
+            if temp_data != None and humid_data != None:
+                self.update_textbox(self.humidity_display, humid_data)
+                self.update_textbox(self.temp_display, temp_data)
 
         #check sensor threshold
         self.sensor_threshold_toggle(1)
@@ -297,11 +307,17 @@ class GUI:
         """
         @brief return true of false for the watering state
         """
+        # Check sensor
+        if sensor == 1:
+            data = self.data_s1
+        if sensor == 2:
+            data = self.data_s2
+
         # Check if moisture exceeds threshold
         last_water_state = self.watering_state
-        if self.data[sensor-1, -1, 1] >= self.threshold and not self.water_override:
+        if data[ -1, 1] >= self.threshold and not self.water_override:
             self.watering_state = False
-        elif self.data[sensor-1, -1, 1] < self.threshold and not self.water_override:
+        elif data[-1, 1] < self.threshold and not self.water_override:
             self.watering_state = True
 
         #write if different
