@@ -21,6 +21,10 @@ before running
 of functionality.
 
 '''
+import sys
+sys.path.append(".\\modules")
+
+
 def main():
     """
     Main function to simulate the GUI and class interactions without a physical COM port.

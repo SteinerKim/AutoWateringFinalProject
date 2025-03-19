@@ -16142,3 +16142,195 @@ Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.]. Thread: 
 
 !ENTRY com.xilinx.sdk.utils 1 0 2025-03-18 17:55:02.183
 !MESSAGE Tool usage for 'TCF_APP_DEBUG' updated to '6'
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:34.114
+!MESSAGE XSCT Command: [disconnect tcfchan#10], Thread: Thread-667
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:34.116
+!MESSAGE XSCT command with result: [disconnect tcfchan#10], Result: [null, ]. Thread: Thread-667
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.808
+!MESSAGE XSCT Command: [connect -url tcp:127.0.0.1:3121], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.813
+!MESSAGE XSCT command with result: [connect -url tcp:127.0.0.1:3121], Result: [null, tcfchan#11]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.813
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.822
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.823
+!MESSAGE XSCT Command: [version -server], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.823
+!MESSAGE XSCT command with result: [version -server], Result: [null, 2024.1.0]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.824
+!MESSAGE XSCT Command: [version], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.824
+!MESSAGE XSCT command with result: [version], Result: [null, xsct 2024.1.0
+SW Build 0 on 2024-05-19-14:06:15
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.825
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.829
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.829
+!MESSAGE XSCT Command: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.841
+!MESSAGE XSCT command with result: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Result: [null,      2  xc7a100t (idcode 13631093 irlen 6 fpga)]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.841
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.845
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.846
+!MESSAGE XSCT Command: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.856
+!MESSAGE XSCT command with result: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Result: [null,      2  xc7a100t (idcode 13631093 irlen 6 fpga)]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.857
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.861
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.861
+!MESSAGE XSCT Command: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.873
+!MESSAGE XSCT command with result: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Result: [null,      2  xc7a100t (idcode 13631093 irlen 6 fpga)]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.874
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.878
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.879
+!MESSAGE XSCT Command: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.894
+!MESSAGE XSCT command with result: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Result: [null,      2  xc7a100t (idcode 13631093 irlen 6 fpga)]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.895
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.899
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.899
+!MESSAGE XSCT Command: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.912
+!MESSAGE XSCT command with result: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Result: [null,      2  xc7a100t (idcode 13631093 irlen 6 fpga)]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.912
+!MESSAGE XSCT Command: [jtag targets -set -filter {name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level == 0}], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.926
+!MESSAGE XSCT command with result: [jtag targets -set -filter {name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level == 0}], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.928
+!MESSAGE XSCT Command: [jtag frequency], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.936
+!MESSAGE XSCT command with result: [jtag frequency], Result: [null, 15000000]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.947
+!MESSAGE XSCT Command: [jtag targets -filter {level == 0}], Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.951
+!MESSAGE XSCT command with result: [jtag targets -filter {level == 0}], Result: [null,   1* Digilent Nexys A7 -100T 210292B0F00CA]. Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.951
+!MESSAGE XSCT Command: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.962
+!MESSAGE XSCT command with result: [jtag targets -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==1}], Result: [null,      2  xc7a100t (idcode 13631093 irlen 6 fpga)]. Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.963
+!MESSAGE XSCT Command: [targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}], Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.989
+!MESSAGE XSCT command with result: [targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292B0F00CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292B0F00CA-13631093-0"}], Result: [null, ]. Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:35.990
+!MESSAGE XSCT Command: [fpga -file C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit], Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.217
+!MESSAGE XSCT command with result: [fpga -file C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/_ide/bitstream/nexysa7fpga.bit], Result: [null, ]. Thread: ModalContext
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.240
+!MESSAGE XSCT Command: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.252
+!MESSAGE XSCT command with result: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.253
+!MESSAGE XSCT Command: [loadhw -hw C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa -regs], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.260
+!MESSAGE XSCT command with result: [loadhw -hw C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/hw/nexysa7fpga.xsa -regs], Result: [null, nexysa7fpga_0]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.261
+!MESSAGE XSCT Command: [configparams mdm-detect-bscan-mask 2], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.262
+!MESSAGE XSCT command with result: [configparams mdm-detect-bscan-mask 2], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.262
+!MESSAGE XSCT Command: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.273
+!MESSAGE XSCT command with result: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.274
+!MESSAGE XSCT Command: [rst -system], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.284
+!MESSAGE XSCT command with result: [rst -system], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:38.284
+!MESSAGE XSCT Command: [after 3000], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.290
+!MESSAGE XSCT command with result: [after 3000], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.291
+!MESSAGE XSCT Command: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.318
+!MESSAGE XSCT command with result: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.319
+!MESSAGE XSCT Command: [dow C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.512
+!MESSAGE XSCT command with result: [dow C:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/app/Debug/app.elf], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.566
+!MESSAGE XSCT Command: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.578
+!MESSAGE XSCT command with result: [targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.579
+!MESSAGE XSCT Command: [con], Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-03-18 20:43:41.585
+!MESSAGE XSCT command with result: [con], Result: [null, ]. Thread: Worker-196: Launching Debugger_app-Default
+
+!ENTRY com.xilinx.sdk.utils 1 0 2025-03-18 20:43:41.586
+!MESSAGE Tool usage for 'TCF_APP_DEBUG' updated to '7'
