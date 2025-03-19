@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time as t
 import logging
+from weather_query import WeatherApp
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from queue import Queue
@@ -71,6 +72,9 @@ class GUI:
         self.water_override = [False, False]
         self.data_interval = data_interval
 
+        #Weather Interface
+        self.weather = WeatherApp()
+
         # Queues for inter-thread communication
         self.interval_queue = Queue()
         self.meas_queue = Queue()
@@ -107,12 +111,12 @@ class GUI:
         Defines the GUI layout and creates widgets.
         """
         # Set initial window size
-        self.root.geometry("1000x550")
+        self.root.geometry("1050x750")
 
         # Configure the main layout with grid
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
-        for i in range(9):
+        for i in range(12):
             self.root.grid_rowconfigure(i, weight=1)
         for i in range(4):
             self.root.grid_columnconfigure(i, weight=1)
@@ -179,6 +183,18 @@ class GUI:
         self.humidity_display.insert(0, "--")
         self.humidity_display.config(state='readonly')   
         
+        #Weather Display
+        self.weather_box = tk.Text(self.root, padx=5, pady=3, height=6, width=50)
+        self.weather_box.grid(row=10, column=0, sticky='n')
+
+        self.weather_city_entry = tk.Entry(self.root, state='normal', width=40)
+        self.weather_city_entry.grid(row=10, column=1, columnspan=2, padx=5, pady=10, sticky='ew')
+
+        self.weather_btn = tk.Button(self.root, text="Get Weather", \
+            command=lambda: self.handle_weather(self.weather_city_entry.get()))
+        self.weather_btn.grid(row=10, column=3, padx=10, pady=2)
+        
+
         # Create plot
         fig = self.plot_window()
         self.canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
@@ -232,6 +248,19 @@ class GUI:
 
         return fig
 
+    def handle_weather(self, city):
+        """
+        @brief
+        Handle getting weather from weather class. Print to
+        textbox for weather.
+        """
+        #get weather string
+        self.weather.city = city
+        string = self.weather.fetch_and_display_weather()        
+
+        #print value to text box
+        self.weather_box.delete("1.0", tk.END)
+        self.weather_box.insert(tk.END, string)
 
     def handle_start(self):
         """
