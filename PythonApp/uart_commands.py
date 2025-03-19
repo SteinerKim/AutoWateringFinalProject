@@ -65,7 +65,7 @@ class uart_commands:
         @param water_state: Boolean indicating whether watering should be ON (True) or OFF (False).
         @param sensor: sensor number; either 1 or 2.
         """
-        logger.info(f"Toggling water state: {'ON' if water_state else 'OFF'}")
+        logger.info(f"Toggling {sensor} water state: {'ON' if water_state else 'OFF'}")
         if not(sensor == 1 or sensor == 2):
             logger.warning(f"Invalid Sensor Number: {sensor}")
         if self.uart.is_connected():
@@ -89,7 +89,12 @@ class uart_commands:
             return None
 
         recv = self.uart.send_receive(5, cmd[0], data=cmd[1:] if len(cmd) > 1 else None)
-        
+      
+        # Some commands return nothing, it's not an error...
+        if not recv:
+            return None
+
+        # Check for good or bad transfer
         if chr(recv[0]) == 'A':
             logger.info(f'Successful transfer of {cmd}, received {recv}')
         if chr(recv[0]) == 'E':

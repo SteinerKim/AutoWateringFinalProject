@@ -66,8 +66,9 @@ class GUI:
 
         # GUI variables
         self.threshold = 50  # Default threshold at 50%
-        self.watering_state = False
-        self.water_override = False
+        self.watering_state = [False, False]
+        self.last_water_state = [False, False]
+        self.water_override = [False, False]
         self.data_interval = data_interval
 
         # Queues for inter-thread communication
@@ -136,14 +137,14 @@ class GUI:
         self.cmd_button.grid(row=2, column=3, padx=10, pady=2)
 
         # Water override button 1
-        self.override_button = tk.Button(self.root, text="Force Toggle 1", \
+        self.override_button_1 = tk.Button(self.root, text="Override 1", \
                 command=(lambda: self.handle_override(1)))
-        self.override_button.grid(row=3, column=3, padx=10, pady=2)
+        self.override_button_1.grid(row=3, column=3, padx=10, pady=2)
 
         # Water override button 2
-        self.override_button = tk.Button(self.root, text="Force Toggle 2", \
+        self.override_button_2 = tk.Button(self.root, text="Override 2", \
                 command=(lambda: self.handle_override(2)))
-        self.override_button.grid(row=4, column=3, padx=10, pady=2)
+        self.override_button_2.grid(row=4, column=3, padx=10, pady=2)
 
         # Start button
         self.start_button = tk.Button(self.root, text="Start", bg="green", \
@@ -151,7 +152,7 @@ class GUI:
         self.start_button.grid(row=7, column=3, padx=10, pady=2)
 
         # Interval input
-        tk.Label(self.root, text="Measurement Interval (min):").grid(row=4, column=2, padx=10, pady=2)
+        tk.Label(self.root, text="Measurement Interval (min):").grid(row=5, column=2, padx=10, pady=2)
 
         self.time_interval = tk.Entry(self.root)
         self.time_interval.grid(row=5, column=3, padx=10, pady=2)
@@ -254,9 +255,17 @@ class GUI:
 
         @param sensor: sensor number, either 1 or 2
         """
-        self.water_override = not self.water_override
-        self.watering_state = self.water_override
+        self.water_override[sensor-1] = not self.water_override[sensor-1]
+        self.watering_state[sensor-1] = self.water_override[sensor-1]
         self.board.command.toggle_water(self.watering_state, sensor)
+        
+        #Change button color
+        if sensor == 1:
+            self.override_button_1.config \
+                    (bg=("green" if self.water_override[sensor-1] else "grey"))
+        if sensor == 2:
+            self.override_button_2.config \
+                    (bg=("green" if self.water_override[sensor-1] else "grey"))
 
     def handle_interval(self):
         """
@@ -307,22 +316,22 @@ class GUI:
         """
         @brief return true of false for the watering state
         """
-        # Check sensor
+        # Unpack sensor values
         if sensor == 1:
             data = self.data_s1
         if sensor == 2:
             data = self.data_s2
 
         # Check if moisture exceeds threshold
-        last_water_state = self.watering_state
-        if data[ -1, 1] >= self.threshold and not self.water_override:
-            self.watering_state = False
-        elif data[-1, 1] < self.threshold and not self.water_override:
-            self.watering_state = True
+        if (data[ -1, 1] >= self.threshold) and (not self.water_override[sensor-1]):
+            self.watering_state[sensor-1] = False
+        elif (data[-1, 1] < self.threshold) and (not self.water_override[sensor-1]):
+            self.watering_state[sensor-1] = True
 
         #write if different
-        if self.watering_state != last_water_state:
-            self.board.command.toggle_water(self.watering_state, sensor)
+        if self.watering_state[sensor-1] != self.last_water_state[sensor-1]:
+            self.board.command.toggle_water(self.watering_state[sensor-1], sensor)
+        self.last_water_state[sensor-1] = self.watering_state[sensor-1]
 
     @staticmethod
     def determine_xdim(t):

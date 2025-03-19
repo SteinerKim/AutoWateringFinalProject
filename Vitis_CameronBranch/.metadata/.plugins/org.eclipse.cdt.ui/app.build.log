@@ -1,24 +1,29 @@
-21:58:36 **** Incremental Build of configuration Debug for project app ****
+17:54:40 **** Build of configuration Debug for project app ****
 make all 
+'Building file: ../src/platform.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/platform.o" -IC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bspinclude/include -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/platform.d" -MT"src/platform.o" -o "src/platform.o" "../src/platform.c"
+'Finished building: ../src/platform.c'
+' '
 'Building file: ../src/watering.c'
 'Invoking: MicroBlaze gcc compiler'
 mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/watering.o" -IC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bspinclude/include -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/watering.d" -MT"src/watering.o" -o "src/watering.o" "../src/watering.c"
 ../src/watering.c: In function 'vReadTemperatureTask':
-../src/watering.c:411:14: warning: unused variable 'xStatus' [-Wunused-variable]
-  411 |     uint32_t xStatus = XST_SUCCESS;
+../src/watering.c:412:14: warning: unused variable 'xStatus' [-Wunused-variable]
+  412 |     uint32_t xStatus = XST_SUCCESS;
       |              ^~~~~~~
-../src/watering.c:410:13: warning: unused variable 'checksum' [-Wunused-variable]
-  410 |     uint8_t checksum;     // checksum stored
+../src/watering.c:411:13: warning: unused variable 'checksum' [-Wunused-variable]
+  411 |     uint8_t checksum;     // checksum stored
       |             ^~~~~~~~
-../src/watering.c:408:13: warning: unused variable 'databytes' [-Wunused-variable]
-  408 |     uint8_t databytes[5]; // 5 bytes to store the data
+../src/watering.c:409:13: warning: unused variable 'databytes' [-Wunused-variable]
+  409 |     uint8_t databytes[5]; // 5 bytes to store the data
       |             ^~~~~~~~~
-../src/watering.c:407:14: warning: unused variable 'data' [-Wunused-variable]
-  407 |     uint32_t data;
+../src/watering.c:408:14: warning: unused variable 'data' [-Wunused-variable]
+  408 |     uint32_t data;
       |              ^~~~
 ../src/watering.c: At top level:
-../src/watering.c:370:17: warning: 'wait_for_response' defined but not used [-Wunused-function]
-  370 | static uint32_t wait_for_response(void)
+../src/watering.c:371:17: warning: 'wait_for_response' defined but not used [-Wunused-function]
+  371 | static uint32_t wait_for_response(void)
       |                 ^~~~~~~~~~~~~~~~~
 'Finished building: ../src/watering.c'
 ' '
@@ -30,9 +35,9 @@ mb-gcc -Wl,-T -Wl,../src/lscript.ld -LC:/Users/Cameron/Documents/ECE544/AutoWate
 'Invoking: MicroBlaze Print Size'
 mb-size app.elf  |tee "app.elf.size"
    text	   data	    bss	    dec	    hex	filename
-  39548	    488	  14188	  54224	   d3d0	app.elf
+  39520	    488	  14184	  54192	   d3b0	app.elf
 'Finished building: app.elf.size'
 ' '
 
-21:58:37 Build Finished (took 613ms)
+17:54:41 Build Finished (took 1s.240ms)
 

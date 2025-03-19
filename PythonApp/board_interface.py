@@ -48,19 +48,20 @@ class Interface:
         self.timer_task = None
         self.interval_task = None
         self.interval = self.get_initial_interval()
+        self.interval_sensor_2 = 1.5*self.interval
 
     def get_initial_interval(self):
         """
         Fetch the initial interval from the queue or use a default value.
         """
         try:
-            return self.interval_queue.get(timeout=10)
+            return self.interval_queue.get(timeout=1)
         except Empty:
             logger.warning("Empty interval queue. Using default interval: 15 minutes.")
-            return self.min_to_sec(15)
+            return self.min_to_sec(1)
         except Exception as e:
             logger.warning(f'Interval queue error: {e}')
-            return self.min_to_sec(15)
+            return self.min_to_sec(1)
 
     def handle_start_thread(self, root):
         """
@@ -71,9 +72,9 @@ class Interface:
         self.start_time = time.time()
 
         #start timer thread
-        logger.info("Starting Timer Thread....")
-        root.after(100, self.timer_thread, root, 1)
-        root.after(150, self.timer_thread, root, 2)
+        logger.info("Starting Timer Thread @ interval {int(self.interval)*1000}....")
+        root.after(int(self.interval)*1000, self.timer_thread, root, 1)
+        root.after(int(self.interval_sensor_2)*1000, self.timer_thread, root, 2)
 
         #start interval thread
         logger.info("Starting Interval Thread....")
@@ -124,19 +125,21 @@ class Interface:
         @param root: GUI root object.
         @param sensor: sensor number for thread
         """
-        if time.time() - self.start_time >= self.interval:
-            self.start_time = time.time()
+        #if time.time() - self.start_time >= \
+        #        (self.interval if sensor==1 else self.interval_sensor_2):
+        #    self.start_time = time.time()
 
-            try:
-                moisture_data = self.command.get_moisture(sensor)
-                if moisture_data is not None:
-                    #put sensor number as well as data on queue
-                    self.measure_queue.put((moisture_data, sensor))
-            except Full:
-                logger.warning("Put element on full measure queue!")
+        try:
+            moisture_data = self.command.get_moisture(sensor)
+            if moisture_data is not None:
+                #put sensor number as well as data on queue
+                self.measure_queue.put((moisture_data, sensor))
+        except Full:
+            logger.warning("Put element on full measure queue!")
         
-        #call again after 100 ms
-        root.after(100, self.timer_thread, root, sensor)
+        #call again after interval ms
+        interval_sec = self.interval if sensor==1 else self.interval_sensor_2
+        root.after(int(interval_sec*1000), self.timer_thread, root, sensor)
 
     @staticmethod
     def min_to_sec(interval):
