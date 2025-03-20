@@ -1,4 +1,4 @@
-17:54:40 **** Build of configuration Debug for project app ****
+15:57:29 **** Build of configuration Debug for project app ****
 make all 
 'Building file: ../src/platform.c'
 'Invoking: MicroBlaze gcc compiler'
@@ -8,23 +8,6 @@ mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/platform.o" -IC:/Users/Camero
 'Building file: ../src/watering.c'
 'Invoking: MicroBlaze gcc compiler'
 mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/watering.o" -IC:/Users/Cameron/Documents/ECE544/AutoWateringFinalProject/Vitis_CameronBranch/platform/export/platform/sw/platform/freertos10_xilinx_domain/bspinclude/include -mlittle-endian -mcpu=v11.0 -mxl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/watering.d" -MT"src/watering.o" -o "src/watering.o" "../src/watering.c"
-../src/watering.c: In function 'vReadTemperatureTask':
-../src/watering.c:412:14: warning: unused variable 'xStatus' [-Wunused-variable]
-  412 |     uint32_t xStatus = XST_SUCCESS;
-      |              ^~~~~~~
-../src/watering.c:411:13: warning: unused variable 'checksum' [-Wunused-variable]
-  411 |     uint8_t checksum;     // checksum stored
-      |             ^~~~~~~~
-../src/watering.c:409:13: warning: unused variable 'databytes' [-Wunused-variable]
-  409 |     uint8_t databytes[5]; // 5 bytes to store the data
-      |             ^~~~~~~~~
-../src/watering.c:408:14: warning: unused variable 'data' [-Wunused-variable]
-  408 |     uint32_t data;
-      |              ^~~~
-../src/watering.c: At top level:
-../src/watering.c:371:17: warning: 'wait_for_response' defined but not used [-Wunused-function]
-  371 | static uint32_t wait_for_response(void)
-      |                 ^~~~~~~~~~~~~~~~~
 'Finished building: ../src/watering.c'
 ' '
 'Building target: app.elf'
@@ -35,9 +18,9 @@ mb-gcc -Wl,-T -Wl,../src/lscript.ld -LC:/Users/Cameron/Documents/ECE544/AutoWate
 'Invoking: MicroBlaze Print Size'
 mb-size app.elf  |tee "app.elf.size"
    text	   data	    bss	    dec	    hex	filename
-  39520	    488	  14184	  54192	   d3b0	app.elf
+  41512	    492	  14188	  56192	   db80	app.elf
 'Finished building: app.elf.size'
 ' '
 
-17:54:41 Build Finished (took 1s.240ms)
+15:57:30 Build Finished (took 1s.218ms)
 

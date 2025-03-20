@@ -416,7 +416,7 @@ void vReadTemperatureTask(void *pvParameters)
     for (;;)
     {
         // Set GPIO as output
-        /*XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
+        XGpio_SetDataDirection(&Gpio, GPIO_CHANNEL, 0x0);
 
         // Send start signal
         XGpio_DiscreteWrite(&Gpio, GPIO_CHANNEL, 0);
@@ -451,8 +451,8 @@ void vReadTemperatureTask(void *pvParameters)
             }
         }
         // Process temperature data, get only whole portion
-        humidity = ((databytes[0]<<8) + (databytes[1])) / 10;
-        temperature = ((databytes[2]<<8) + (databytes[3])) / 10;
+        humidity = ((databytes[0]<<8) + (databytes[1]))/10;
+        temperature = ((databytes[2]<<8) + (databytes[3]))/10;
 
         checksum = databytes[0] + databytes[1] + databytes[2] + databytes[3];
 
@@ -461,9 +461,7 @@ void vReadTemperatureTask(void *pvParameters)
             xil_printf("checksum error in temp sensor\r\n");
             continue;
         }
-*/
-        humidity = 66;
-        temperature = 17;
+
 
         if (xSemaphoreTake(temp_sem,0)) {
             // send data to TX queue and RX queue

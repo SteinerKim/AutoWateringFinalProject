@@ -1,4 +1,4 @@
-17:54:33 **** Build of project platform ****
+15:57:22 **** Build of project platform ****
 buildplatform.bat 59890 platform  
 '\gnu\microblaze\lin\bin\' is not recognized as an internal or external command,
 operable program or batch file.
@@ -6,7 +6,7 @@ operable program or batch file.
 operable program or batch file.
 '\gnuwin\bin\' is not recognized as an internal or external command,
 operable program or batch file.
-XSDB Server Channel: tcfchan#9
+XSDB Server Channel: tcfchan#19
 Building the BSP Library for domain  - freertos10_xilinx_domain on processor microblaze_0
 make --no-print-directory seq_libs
 
@@ -204,27 +204,27 @@ make -C microblaze_0/libsrc/tmrctr_v4_12/src -s libs  "SHELL=CMD" "COMPILER=mb-g
 R_FLAGS=  -O2 -c -mcpu=v11.0 -mlittle-endian -mxl-soft-mul" "EXTRA_COMPILER_FLAGS=-g -ffunction-sections -fdata-sections -Wall 
 -Wextra -fno-tree-loop-distribute-patterns"
 
+"Running Make libs in microblaze_0/libsrc/uartlite_v3_10/src"
+
+make -C microblaze_0/libsrc/uartlite_v3_10/src -s libs  "SHELL=CMD" "COMPILER=mb-gcc" "ASSEMBLER=mb-as" "ARCHIVER=mb-ar" "COMPI
 port.c: In function 'xPortStartScheduler':
+LER_FLAGS=  -O2 -c -mcpu=v11.0 -mlittle-endian -mxl-soft-mul" "EXTRA_COMPILER_FLAGS=-g -ffunction-sections -fdata-sections -Wal
+l -Wextra -fno-tree-loop-distribute-patterns"
+
 port.c:285:17: warning: array subscript -2 is outside array bounds of 'UINTPTR[536870911]' {aka 'unsigned int[536870911]'} [-Warray-bounds]
   285 |     pulISRStack -= 2;
       |                 ^~
 port.c:267:24: note: at offset -8 into object '_stack' of size [0, 2147483647]
   267 |         extern UINTPTR _stack[];
       |                        ^~~~~~
-"Running Make libs in microblaze_0/libsrc/uartlite_v3_10/src"
-
-make -C microblaze_0/libsrc/uartlite_v3_10/src -s libs  "SHELL=CMD" "COMPILER=mb-gcc" "ASSEMBLER=mb-as" "ARCHIVER=mb-ar" "COMPI
-LER_FLAGS=  -O2 -c -mcpu=v11.0 -mlittle-endian -mxl-soft-mul" "EXTRA_COMPILER_FLAGS=-g -ffunction-sections -fdata-sections -Wal
-l -Wextra -fno-tree-loop-distribute-patterns"
-
 xintc.c: In function 'XIntc_Initialize':
 xintc.c:131:17: warning: unused variable 'vector_base' [-Wunused-variable]
   131 |         UINTPTR vector_base;
       |                 ^~~~~~~~~~~
-mb-ar: creating ../../../lib/libfreertos.a
 microblaze_sleep.c:83:9: note: '#pragma message: For the sleep routines, assembly instructions are used'
    83 | #pragma message ("For the sleep routines, assembly instructions are used")
       |         ^~~~~~~
+mb-ar: creating ../../../lib/libfreertos.a
 'Finished building libraries parallelly.'
 
 make --no-print-directory archive
@@ -258,5 +258,5 @@ icroblaze_0/lib/xuartlite_selftest.o microblaze_0/lib/xuartlite_sinit.o microbla
 'Finished building libraries'
 
 
-17:54:39 Build Finished (took 6s.300ms)
+15:57:28 Build Finished (took 6s.848ms)
 

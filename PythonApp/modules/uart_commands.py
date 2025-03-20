@@ -52,7 +52,7 @@ class uart_commands:
             return None, None
         if chr(data[0]) == 'E':
             logger.warning(f'Received error char from board....')
-
+        
         temperature = data[2]
         humidity = data[1]
 
@@ -129,7 +129,7 @@ class uart_commands:
             logger.warning(f'Error in board output! received: {data}')
 
         #turn bytes into python int object
-        read_adc = int.from_bytes(data[1:2], byteorder='big')
+        read_adc = int.from_bytes(data[1:3], byteorder='big')
         return self.get_moisture_percent(read_adc)        
     
     @staticmethod
@@ -150,4 +150,4 @@ class uart_commands:
         # Ensure the value stays within bounds
         sensor_data = max(min_adc, min(max_adc, sensor_data))
         
-        return int((-100/(24500-15000))*sensor_data + 257.895 )
+        return int((-100/(24500-15000))*(sensor_data) + 257.895 )
