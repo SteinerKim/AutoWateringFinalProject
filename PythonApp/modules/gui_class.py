@@ -267,6 +267,8 @@ class GUI:
         @brief
         Handles start button press. Passes to board interface handle function.
         """
+        self.watering_state[1] = False
+        self.watering_state[2] = False
         self.board.handle_start_thread(self.root)
 
     def handle_send_cmd(self):
@@ -285,8 +287,9 @@ class GUI:
         @param sensor: sensor number, either 1 or 2
         """
         self.water_override[sensor-1] = not self.water_override[sensor-1]
-        self.watering_state[sensor-1] = self.water_override[sensor-1]
-        self.board.command.toggle_water(self.watering_state, sensor)
+        #self.watering_state[sensor-1] = self.water_override[sensor-1]
+        #self.board.command.toggle_water(self.watering_state, sensor)
+        self.board.command.toggle_water(self.water_override[sensor-1], sensor)
         
         #Change button color
         if sensor == 1:

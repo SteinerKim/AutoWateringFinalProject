@@ -70,6 +70,10 @@ class Interface:
         @param root: GUI root object.
         """
         self.start_time = time.time()
+        
+        #perform first check for moisture to initialize device
+        self.command.raw_command("S1")
+        self.command.raw_command("S2")
 
         #start timer thread
         logger.info("Starting Timer Thread @ interval {int(self.interval)*1000}....")
